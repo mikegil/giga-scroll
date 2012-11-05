@@ -1,0 +1,37 @@
+{
+  "name": "giga-scroll",
+  "version": "0.0.1",
+  "url": "https://github.com/mpj/giga-scroll",
+  "author": {
+    "name": "Mattias Petter Johansson",
+    "email": "mpj@mpj.me",
+    "url": "http://mpj.me"
+  },
+  "description": "Virtual scroll component for Knockout.js",
+  "main": "lib/create_liar.js",
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "~1.6.0",
+    "chai": "~1.2.0",
+    "growl": "~1.5.1",
+    "grunt": "~0.3.17",
+    "grunt-simple-mocha": "~0.2.0",
+    "grunt-bump": "~0.0.1"
+  },
+  "scripts": {
+    "test": "./node_modules/mocha/bin/mocha --reporter spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mpj/giga-scroll.git"
+  },
+  "keywords": [
+    "knockout",
+    "infinite scroll",
+    "scroll",
+    "virtual scroll",
+    "virtual",
+    "mvvm"
+  ],
+  "license": "MIT"
+}
