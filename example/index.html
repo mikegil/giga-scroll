@@ -1,0 +1,24 @@
+<html>
+  <title>GigaScroll example</title>
+  <body>
+    <ul id="user-list" data-bind="gigaScroll: userListInterface">
+      <li data-bind="text: userName"></li>
+    </ul>
+    <script src="knockout-2.2.0.js" />
+    <script>
+      var viewModel = {
+        _fakeServerItems: ko.obserableArray(generateRandomItems(50000)),
+        userListInterface: {
+          totalServerItems: ko.computed(function() {
+            return _fakeServerItems().length;
+          }),
+          getMissingItems: function(startIndex, length, callback) {
+            setTimeout(function() {
+              callback(items.slice(this._fakeServerItems(), length));
+            }, 1000);
+          }
+        }
+      }
+    </script>
+  </body>
+</html>
