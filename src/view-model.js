@@ -14,6 +14,7 @@ function GigaScrollViewModel() {
 
   self.getItemsMissing = null;
 
+  var _visibleItemsCache = ko.observableArray();
   var _numberOfServerItems = ko.observable(null);
   var _viewPortHeight = ko.observable(null);
   var _elementHeight = ko.observable(null);
@@ -42,11 +43,17 @@ function GigaScrollViewModel() {
 
   var _onGetItemsMissingResult = function(items, numberOfServerItems) {
     _numberOfServerItems(numberOfServerItems);
+    _visibleItemsCache(items);
   }
 
   self.visibleItems = DC(function() {
+    console.log("visibleItems")
     _loadIfMissing(_visibleStartIndex(), _fitsInViewPort())
-    return [];
+    return _visibleItemsCache();
+  });
+
+  self.offsetTop = DC(function() {
+    return _scrollPosition();
   });
 
   self.setViewPortHeight = function(height)  {

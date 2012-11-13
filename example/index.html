@@ -1,24 +1,117 @@
 <html>
   <title>GigaScroll example</title>
+  <style>
+    #viewport {
+      height: 100%;
+      position: relative;
+      overflow: scroll;
+    }
+  </style>
   <body>
-    <ul id="user-list" data-bind="gigaScroll: userListInterface">
-      <li data-bind="text: userName"></li>
-    </ul>
-    <script src="knockout-2.2.0.js" />
+    <div id="viewport">
+      <div id="gigaDiv" data-bind="style: { height: gigaDivHeight() + 'px' } ">
+        <ul data-bind="foreach: visibleItems, style: { paddingTop: offsetTop() + 'px' }">
+          <li data-bind="text: name"></li>
+        </ul>
+      </div>
+    </div>
+
+
+    <script src="../vendor/jquery-1.8.2.js"></script>
+    <script src="../vendor/knockout-2.2.0.js"></script>
+    <script src="../src/view-model.js"></script>
     <script>
-      var viewModel = {
-        _fakeServerItems: ko.obserableArray(generateRandomItems(50000)),
-        userListInterface: {
-          totalServerItems: ko.computed(function() {
-            return _fakeServerItems().length;
-          }),
-          getMissingItems: function(startIndex, length, callback) {
-            setTimeout(function() {
-              callback(items.slice(this._fakeServerItems(), length));
-            }, 1000);
-          }
+
+    var ko = window.ko;
+
+      var generateRandomNum = function (len) {
+        var i = 1,
+            multiplier = 10;
+
+        while (i < len) {
+            multiplier = multiplier * 10;
+            i++;
         }
+
+        return Math.round(Math.random() * multiplier);
+      };
+
+
+      var generateLargeData = function () {
+        var arr = [],
+            i = 0;
+
+        var size = 500000;
+        while (i < size) {
+            arr.push({
+              name: generateRandomNum(6)
+            });
+
+            i++;
+        }
+
+        return arr;
+      };
+
+      function fakeDatabase() {
+
+        var db = generateLargeData();
+
+        return {
+          length: db.length,
+          load: function(offset, count, callback) {
+            setTimeout(function() {
+              var items = db.slice(offset, offset+count);
+              callback(items);
+            }, 500);
+          },
+          all: db
+        };
       }
+
+      var gsvm = new GigaScrollViewModel();
+      gsvm.getItemsMissing = function(startIndex, length, callback) {
+        viewModel._db.load(startIndex, length, function(items) {
+          callback(items, viewModel._db.length);
+        });
+      }
+
+      var viewModel = {
+        _db: fakeDatabase(),
+        gigaDivHeight: gsvm.gigaDivHeight,
+        visibleItems: gsvm.visibleItems,
+        offsetTop: gsvm.offsetTop
+      }
+
+      function measureViewPort() {
+        var viewPortSize = $("#viewport").outerHeight();
+        gsvm.setViewPortHeight(viewPortSize);
+      }
+
+      window.addEventListener('resize', measureViewPort);
+
+       var updateHandle = null;
+       var viewPort = document.getElementById('viewport');
+       viewPort.addEventListener('scroll', function (e) {
+         clearTimeout(updateHandle);
+         setTimeout(function() {
+           gsvm.setScrollPosition(viewPort.scrollTop);
+         }, 50);
+
+       });
+
+      $(document).ready(function() {
+        measureViewPort();
+
+        var itemHeight = $('#gigaDiv ul li').outerHeight();
+        gsvm.setElementHeight(itemHeight);
+
+        ko.applyBindings(viewModel);
+      });
+
     </script>
+    <!--  Automatic reload whenever something changes in your project directory,
+        if you use LiveReload (http://livereload.com) -->
+    <script>document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
   </body>
 </html>
