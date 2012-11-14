@@ -35,15 +35,26 @@ function GigaScrollViewModel() {
   });
 
   var _loadIfMissing = function(startIndex, length) {
-    if (startIndex !== null && length !== null) {
-      self.getItemsMissing(startIndex, length, function(items, numberOfServerItems) {
-        _numberOfServerItems(numberOfServerItems);
-        for(var i = 0; i < length; i++) {
-          _itemCache()[startIndex+i] = items[i];
-        }
-        _itemCache.valueHasMutated();
-      });
+    if (startIndex === null || length === null) return;
+
+
+    while(_itemCache()[startIndex]) {
+      startIndex++;
+      length--;
     }
+    while(_itemCache()[startIndex+length]) {
+      length--;
+      //if (length < 1) return; // TODO: Add unit test for this
+    }
+
+    self.getItemsMissing(startIndex, length, function(items, numberOfServerItems) {
+      _numberOfServerItems(numberOfServerItems);
+      for(var i = 0; i < length; i++) {
+        _itemCache()[startIndex+i] = items[i];
+      }
+      _itemCache.valueHasMutated();
+    });
+
   };
 
 
@@ -56,7 +67,7 @@ function GigaScrollViewModel() {
       iServer = _visibleStartIndex() + i;
       cached =  _itemCache()[iServer];
       if (!cached) {
-        _loadIfMissing(iServer, (_fitsInViewPort()*2) - i);
+        _loadIfMissing(Math.max(iServer-_fitsInViewPort(),0), (_fitsInViewPort()*(iServer===0?2:3)) - i);
         break;
       }
       toReturn[i] = cached;

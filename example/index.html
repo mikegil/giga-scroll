@@ -1,6 +1,7 @@
 <html>
   <title>GigaScroll example</title>
   <style>
+    body { overflow: hidden; margin: 0; padding: 0;}
     #viewport {
       height: 100%;
       overflow: scroll;
@@ -14,13 +15,14 @@
     }
   </style>
   <body>
-    <br /><br /><br /><br />
+    <div id="container" style="width: 80%">
     <div id="viewport">
       <div id="gigaDiv" data-bind="style: { height: gigaDivHeight() + 'px' } ">
         <ul data-bind="foreach: visibleItems, style: { paddingTop: offsetTop() + 'px' }">
           <li data-bind="text: name"></li>
         </ul>
       </div>
+    </div>
     </div>
 
 

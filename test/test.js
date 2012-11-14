@@ -99,9 +99,11 @@ describe('viewModel', function() {
             vm.visibleItems();
           })
 
-          it('should request items from further down', function() {
-            expect(indexRequested, 'index').to.equal(100);
-            expect(lengthRequested, 'length').to.equal(20);
+          it('should start loading from one viewport above', function() {
+            expect(indexRequested, 'index').to.equal(100-10);
+          })
+          it('should end loading one viewport below', function() {
+            expect(lengthRequested, 'length').to.equal(10*3);
           })
 
           it('should reposition the list', function() {
