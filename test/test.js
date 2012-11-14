@@ -110,6 +110,24 @@ describe('viewModel', function() {
             vm.offsetTop().should.equal(8000);
           });
 
+          describe('scrolling back up', function (done) {
+            beforeEach(function(done) {
+              setTimeout(function () {
+                vm.setScrollPosition(8000-400); // half a viewport height
+                done();
+              }, 60); // Wait for prior load to complete
+            });
+
+            it('loads one screenheight up', function() {
+              indexRequested.should.equal(100-10-5);
+            });
+
+            it('stops loading from where we have cached items', function() {
+              lengthRequested.should.equal(5);
+            })
+
+          })
+
         });
 
         describe('when scrolling just a little bit', function () {

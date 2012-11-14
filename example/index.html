@@ -72,7 +72,7 @@
             setTimeout(function() {
               var items = db.slice(offset, offset+count);
               callback(items);
-            }, 500);
+            }, 2000);
           },
           all: db
         };
@@ -99,12 +99,9 @@
 
       window.addEventListener('resize', measureViewPort);
 
-       var updateHandle = null;
        var viewPort = document.getElementById('viewport');
        viewPort.addEventListener('scroll', function (e) {
-         gsvm.setScrollPosition(viewPort.scrollTop);
-
-
+          gsvm.setScrollPosition(viewPort.scrollTop);
        });
 
       $(document).ready(function() {

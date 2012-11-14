@@ -35,14 +35,12 @@ function GigaScrollViewModel() {
   });
 
   var _loadIfMissing = function(startIndex, length) {
-    if (startIndex === null || length === null) return;
-
 
     while(_itemCache()[startIndex]) {
       startIndex++;
       length--;
     }
-    while(_itemCache()[startIndex+length]) {
+    while(_itemCache()[startIndex+length-1]) {
       length--;
       //if (length < 1) return; // TODO: Add unit test for this
     }
@@ -59,20 +57,22 @@ function GigaScrollViewModel() {
 
 
   self.visibleItems = DC(function() {
-    var i, iServer, cached, toReturn;
+    var loadStartIndex, loadLength, lastIndex;
 
-    toReturn = new Array(_fitsInViewPort() || 0);
-    for (i = 0; i < _fitsInViewPort(); i++) {
-
-      iServer = _visibleStartIndex() + i;
-      cached =  _itemCache()[iServer];
-      if (!cached) {
-        _loadIfMissing(Math.max(iServer-_fitsInViewPort(),0), (_fitsInViewPort()*(iServer===0?2:3)) - i);
-        break;
-      }
-      toReturn[i] = cached;
+    if (_visibleStartIndex() === null || _fitsInViewPort === null) {
+      return [];
     }
-    return toReturn;
+
+    loadStartIndex = Math.max(_visibleStartIndex()-_fitsInViewPort(), 0);
+    loadLength = _fitsInViewPort() * (loadStartIndex === 0 ? 2 : 3);
+
+    _loadIfMissing(loadStartIndex, loadLength);
+
+    // Ensure array long enough
+    lastIndex = _visibleStartIndex() + _fitsInViewPort();
+    if (!_itemCache()[lastIndex]) { _itemCache()[lastIndex] = null; }
+
+    return _itemCache().slice(_visibleStartIndex(), _visibleStartIndex()+_fitsInViewPort());
   });
 
   self.offsetTop = DC(function() {
