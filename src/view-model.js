@@ -7,14 +7,13 @@ var deferredComputed = function(fn) {
 
 var DC = deferredComputed;
 
-
 function GigaScrollViewModel() {
 
   var self = this;
 
   self.getItemsMissing = null;
 
-  var _visibleItemsCache = ko.observableArray();
+  var _itemCache = ko.observableArray();
   var _numberOfServerItems = ko.observable(null);
   var _viewPortHeight = ko.observable(null);
   var _elementHeight = ko.observable(null);
@@ -31,25 +30,38 @@ function GigaScrollViewModel() {
     if (_viewPortHeight() === null || _elementHeight() === null) {
       return null;
     }
-    var val = _viewPortHeight() / _elementHeight();
+    var val = Math.ceil(_viewPortHeight() / _elementHeight());
     return val;
   });
 
   var _loadIfMissing = function(startIndex, length) {
     if (startIndex !== null && length !== null) {
-      self.getItemsMissing(startIndex, length, _onGetItemsMissingResult);
+      self.getItemsMissing(startIndex, length, function(items, numberOfServerItems) {
+        _numberOfServerItems(numberOfServerItems);
+        for(var i = 0; i < length; i++) {
+          _itemCache()[startIndex+i] = items[i];
+        }
+        _itemCache.valueHasMutated();
+      });
     }
   };
 
-  var _onGetItemsMissingResult = function(items, numberOfServerItems) {
-    _numberOfServerItems(numberOfServerItems);
-    _visibleItemsCache(items);
-  }
 
   self.visibleItems = DC(function() {
-    console.log("visibleItems")
-    _loadIfMissing(_visibleStartIndex(), _fitsInViewPort())
-    return _visibleItemsCache();
+    var i, iServer, cached, toReturn;
+
+    toReturn = new Array(_fitsInViewPort() || 0);
+    for (i = 0; i < _fitsInViewPort(); i++) {
+
+      iServer = _visibleStartIndex() + i;
+      cached =  _itemCache()[iServer];
+      if (!cached) {
+        _loadIfMissing(iServer, _fitsInViewPort() - i);
+        break;
+      }
+      toReturn[i] = cached;
+    }
+    return toReturn;
   });
 
   self.offsetTop = DC(function() {
@@ -61,7 +73,7 @@ function GigaScrollViewModel() {
   }
   self.setElementHeight = function(height)  {
     _elementHeight(height);
-    self.getItemsMissing(0, 10, _onGetItemsMissingResult);
+    //self.getItemsMissing(0, 10, _onGetItemsMissingResult);
   }
   self.setScrollPosition = function(y) {
     _scrollPosition(y);

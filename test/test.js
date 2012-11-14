@@ -16,7 +16,10 @@ describe('viewModel', function() {
       vm.getItemsMissing = function(index, length, callback) {
         indexRequested = index;
         lengthRequested = length;
-        callback(itemsLoaded, numberOfServerItems);
+        setTimeout(function() {
+          callback(itemsLoaded, numberOfServerItems);
+        }, 25);
+
       }
     })
 
@@ -52,6 +55,7 @@ describe('viewModel', function() {
         beforeEach(function() {
           vm.setViewPortHeight(800);
           vm.setElementHeight(80);
+          vm.visibleItems();
         })
 
         it('should request the first ten items', function() {
@@ -60,19 +64,24 @@ describe('viewModel', function() {
         });
 
         it('should display the items', function(done) {
-          vm.visibleItems();
           setTimeout(function() {
+            vm.visibleItems();
             vm.visibleItems()[2].name.should.equal('Olivia');
             vm.visibleItems()[9].name.should.equal('Walternate');
+
             done();
-          }, 0);
+          }, 60);
+
         })
 
-        it('should calculate the size of the gigaDiv', function() {
-          vm.gigaDivHeight().should.equal(8000000);
+        it('should calculate the size of the gigaDiv', function(done) {
+          setTimeout(function() {
+            vm.gigaDivHeight().should.equal(8000000);
+            done();
+          }, 60)
         });
 
-        describe('when scrolling down a bit', function() {
+        describe('when scrolling down pretty far', function() {
           beforeEach(function() {
             vm.setScrollPosition(8000);
             vm.visibleItems();
@@ -89,13 +98,72 @@ describe('viewModel', function() {
 
         });
 
+        describe('when scrolling just a little bit', function () {
+          beforeEach(function(done) {
+            setTimeout(function() {
+              vm.setScrollPosition(400); // Half the viewport
+              done();
+            }, 60); // <- wait for prior load to finish
+          })
+
+          it('immediately moves the list', function() {
+            vm.visibleItems()[0].name.should.equal('Astrid');
+          })
+
+          it('empties the unloaded items (first)', function() {
+            expect(vm.visibleItems()[5]).to.equal(undefined)
+          })
+
+          it('empties the unloaded items (last)', function() {
+            expect(vm.visibleItems()[9]).to.equal(undefined)
+          })
+
+          it('returns the full length even if not loaded', function() {
+            vm.visibleItems().length.should.equal(10);
+          })
+
+          it('loads only the necessary items (index)', function() {
+            vm.visibleItems();
+            indexRequested.should.equal(10);
+          })
+
+          it('loads only the necessary items (length)', function() {
+            vm.visibleItems();
+            lengthRequested.should.equal(5)
+          })
+
+          describe('when scrolling back up', function() {
+            beforeEach(function() {
+              vm.setScrollPosition(0);
+            })
+
+            it('doesnt request new load', function() {
+              vm.visibleItems();
+              indexRequested.should.not.equal(0)
+            })
+
+            it('uses cached items', function() {
+              vm.visibleItems()[0].name.should.equal("John");
+            })
+          })
+        })
+
+      })
 
 
+      describe('when uneven viewPortHeight and elementHeight are assigned', function (){
+        beforeEach(function() {
+          vm.setViewPortHeight(714);
+          vm.setElementHeight(71);
+        });
+
+        it('rounds upwards', function() {
+          vm.visibleItems().length.should.equal(11)
+        })
 
       })
 
     })
-
 
   })
 
