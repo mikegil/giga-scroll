@@ -4,9 +4,17 @@
     #viewport {
       height: 100%;
       overflow: scroll;
+      border: 1px solid blue;
+    }
+    #gigaDiv ul {
+      /* Reset or the offset will be off */
+      margin: 0;
+      padding: 0;
+      border: 0;
     }
   </style>
   <body>
+    <br /><br /><br /><br />
     <div id="viewport">
       <div id="gigaDiv" data-bind="style: { height: gigaDivHeight() + 'px' } ">
         <ul data-bind="foreach: visibleItems, style: { paddingTop: offsetTop() + 'px' }">

@@ -23,7 +23,7 @@ function GigaScrollViewModel() {
     if (_scrollPosition() === null || _elementHeight() === null) {
       return null;
     }
-    return _scrollPosition() / _elementHeight();
+    return Math.floor(_scrollPosition() / _elementHeight());
   });
 
   var _fitsInViewPort = DC(function() {
@@ -65,7 +65,7 @@ function GigaScrollViewModel() {
   });
 
   self.offsetTop = DC(function() {
-    return _scrollPosition();
+    return _visibleStartIndex() * _elementHeight();
   });
 
   self.setViewPortHeight = function(height)  {
@@ -73,7 +73,6 @@ function GigaScrollViewModel() {
   }
   self.setElementHeight = function(height)  {
     _elementHeight(height);
-    //self.getItemsMissing(0, 10, _onGetItemsMissingResult);
   }
   self.setScrollPosition = function(y) {
     _scrollPosition(y);

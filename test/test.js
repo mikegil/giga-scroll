@@ -148,6 +148,16 @@ describe('viewModel', function() {
           })
         })
 
+        describe('when scrolling a TINY bit', function() {
+          beforeEach(function() {
+            vm.setScrollPosition(40); // half an item
+          });
+
+          it('doesnt move the offset', function() {
+            vm.offsetTop().should.equal(0);
+          })
+        })
+
       })
 
 
@@ -160,8 +170,10 @@ describe('viewModel', function() {
         it('rounds upwards', function() {
           vm.visibleItems().length.should.equal(11)
         })
-
       })
+
+
+
 
     })
 
