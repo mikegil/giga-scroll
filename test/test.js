@@ -58,7 +58,7 @@ describe('viewModel', function() {
           vm.visibleItems();
         })
 
-        it('should request the first ten items', function() {
+        it('should request one screenheight worth', function() {
           indexRequested.should.equal(0);
           lengthRequested.should.equal(10);
         });
