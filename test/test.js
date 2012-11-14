@@ -46,7 +46,19 @@ describe('viewModel', function() {
           { name: 'Newton' },
           { name: 'Broyles' },
           { name: 'William' },
-          { name: 'Walternate' }
+          { name: 'Walternate' },
+
+          { name: 'Ninja' },
+          { name: 'Johanna' },
+          { name: 'Martin' },
+          { name: 'Kalle' },
+          { name: 'Hogga' },
+
+          { name: 'Nisse' },
+          { name: 'Göran' },
+          { name: 'Kerstin' },
+          { name: 'Amanda' },
+          { name: 'Ludde' }
         ];
       })
 
@@ -60,7 +72,7 @@ describe('viewModel', function() {
 
         it('should request one screenheight worth', function() {
           indexRequested.should.equal(0);
-          lengthRequested.should.equal(10);
+          lengthRequested.should.equal(20);
         });
 
         it('should display the items', function(done) {
@@ -88,8 +100,8 @@ describe('viewModel', function() {
           })
 
           it('should request items from further down', function() {
-            expect(indexRequested, 'index').to.equal(100 );
-            expect(lengthRequested, 'length').to.equal(10);
+            expect(indexRequested, 'index').to.equal(100);
+            expect(lengthRequested, 'length').to.equal(20);
           })
 
           it('should reposition the list', function() {
@@ -101,17 +113,17 @@ describe('viewModel', function() {
         describe('when scrolling just a little bit', function () {
           beforeEach(function(done) {
             setTimeout(function() {
-              vm.setScrollPosition(400); // Half the viewport
+              vm.setScrollPosition(1200); // 1.5 viewports
               done();
             }, 60); // <- wait for prior load to finish
           })
 
           it('immediately moves the list', function() {
-            vm.visibleItems()[0].name.should.equal('Astrid');
+            vm.visibleItems()[0].name.should.equal('Nisse');
           })
 
           it('empties the unloaded items (first)', function() {
-            expect(vm.visibleItems()[5]).to.equal(undefined)
+            expect(vm.visibleItems()[15]).to.equal(undefined)
           })
 
           it('empties the unloaded items (last)', function() {
@@ -124,12 +136,12 @@ describe('viewModel', function() {
 
           it('loads only the necessary items (index)', function() {
             vm.visibleItems();
-            indexRequested.should.equal(10);
+            indexRequested.should.equal(20);
           })
 
           it('loads only the necessary items (length)', function() {
             vm.visibleItems();
-            lengthRequested.should.equal(5)
+            lengthRequested.should.equal(15)
           })
 
           describe('when scrolling back up', function() {

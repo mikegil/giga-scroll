@@ -56,7 +56,7 @@ function GigaScrollViewModel() {
       iServer = _visibleStartIndex() + i;
       cached =  _itemCache()[iServer];
       if (!cached) {
-        _loadIfMissing(iServer, _fitsInViewPort() - i);
+        _loadIfMissing(iServer, (_fitsInViewPort()*2) - i);
         break;
       }
       toReturn[i] = cached;
