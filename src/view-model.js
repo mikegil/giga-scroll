@@ -34,6 +34,8 @@ function GigaScrollViewModel() {
     return val;
   });
 
+  var _getItemsMissingHandle = null;
+
   var _loadIfMissing = function(startIndex, length) {
 
     while(_itemCache()[startIndex]) {
@@ -42,19 +44,23 @@ function GigaScrollViewModel() {
     }
     while(_itemCache()[startIndex+length-1]) {
       length--;
-      //if (length < 1) return; // TODO: Add unit test for this
+      if (length < 1) return; // TODO: Add unit test for this
     }
 
-    self.getItemsMissing(startIndex, length, function(items, numberOfServerItems) {
-      _numberOfServerItems(numberOfServerItems);
-      for(var i = 0; i < length; i++) {
-        _itemCache()[startIndex+i] = items[i];
-      }
-      _itemCache.valueHasMutated();
-    });
+    clearTimeout(_getItemsMissingHandle);
+    _getItemsMissingHandle = setTimeout(function (){
+      console.log("loading", startIndex, length)
+      self.getItemsMissing(startIndex, length, function(items, numberOfServerItems) {
+        _numberOfServerItems(numberOfServerItems);
+        for(var i = 0; i < length; i++) {
+          _itemCache()[startIndex+i] = items[i];
+        }
+        _itemCache.valueHasMutated();
+      });
+    }, 100);
+
 
   };
-
 
   self.visibleItems = DC(function() {
     var loadStartIndex, loadLength, lastIndex;

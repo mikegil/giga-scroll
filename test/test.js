@@ -4,6 +4,7 @@ var expect = chai.expect;
 
 var vm = null;
 var numberOfServerItems = null;
+var numberOfLoadsRequested = 0;
 var indexRequested = null;
 var lengthRequested = null;
 var itemsLoaded = [];
@@ -12,14 +13,15 @@ var itemsLoaded = [];
 describe('viewModel', function() {
   describe('when initialized', function () {
     beforeEach(function() {
+      numberOfLoadsRequested = 0;
       vm = new GigaScrollViewModel();
       vm.getItemsMissing = function(index, length, callback) {
+        numberOfLoadsRequested++;
         indexRequested = index;
         lengthRequested = length;
         setTimeout(function() {
           callback(itemsLoaded, numberOfServerItems);
         }, 25);
-
       }
     })
 
@@ -64,10 +66,11 @@ describe('viewModel', function() {
 
 
       describe('when viewPortHeight and elementHeight is assigned', function() {
-        beforeEach(function() {
+        beforeEach(function(done) {
           vm.setViewPortHeight(800);
           vm.setElementHeight(80);
           vm.visibleItems();
+          setTimeout(done, 100);
         })
 
         it('should request one screenheight worth', function() {
@@ -94,9 +97,10 @@ describe('viewModel', function() {
         });
 
         describe('when scrolling down pretty far', function() {
-          beforeEach(function() {
+          beforeEach(function(done) {
             vm.setScrollPosition(8000);
             vm.visibleItems();
+            setTimeout(done, 200);
           })
 
           it('should start loading from one viewport above', function() {
@@ -114,8 +118,9 @@ describe('viewModel', function() {
             beforeEach(function(done) {
               setTimeout(function () {
                 vm.setScrollPosition(8000-400); // half a viewport height
-                done();
-              }, 60); // Wait for prior load to complete
+                vm.visibleItems();
+                setTimeout(done, 100);
+              }, 100); // Wait for prior load to complete
             });
 
             it('loads one screenheight up', function() {
@@ -134,7 +139,8 @@ describe('viewModel', function() {
           beforeEach(function(done) {
             setTimeout(function() {
               vm.setScrollPosition(1200); // 1.5 viewports
-              done();
+              vm.visibleItems();
+              setTimeout(done, 100);
             }, 60); // <- wait for prior load to finish
           })
 
@@ -155,7 +161,6 @@ describe('viewModel', function() {
           })
 
           it('loads only the necessary items (index)', function() {
-            vm.visibleItems();
             indexRequested.should.equal(20);
           })
 
@@ -190,7 +195,31 @@ describe('viewModel', function() {
           })
         })
 
-      })
+        describe('when scrolling two times quickly', function() {
+          beforeEach(function(done) {
+            setTimeout(function() {
+              numberOfLoadsRequested = 0;
+              vm.setScrollPosition(200);
+              vm.visibleItems();
+              setTimeout(function() {
+                vm.setScrollPosition(1200);
+                vm.visibleItems();
+                setTimeout(done, 200);
+              }, 99)
+            }, 100); // wait for any prior load to finish
+          })
+
+          it('loads only one time', function () {
+            numberOfLoadsRequested.should.equal(1);
+          })
+
+          it('loads the data for the latest scroll position', function () {
+            indexRequested.should.equal(20);
+          })
+
+        })
+
+      });
 
 
       describe('when uneven viewPortHeight and elementHeight are assigned', function (){
@@ -202,9 +231,7 @@ describe('viewModel', function() {
         it('rounds upwards', function() {
           vm.visibleItems().length.should.equal(11)
         })
-      })
-
-
+      });
 
 
     })
