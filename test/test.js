@@ -73,9 +73,9 @@ describe('viewModel', function() {
           setTimeout(done, 100);
         })
 
-        it('should request one screenheight worth', function() {
+        it('should request three screenheights worth', function() {
           indexRequested.should.equal(0);
-          lengthRequested.should.equal(20);
+          lengthRequested.should.equal(30);
         });
 
         it('should display the items', function(done) {
@@ -119,7 +119,7 @@ describe('viewModel', function() {
               setTimeout(function () {
                 vm.setScrollPosition(8000-400); // half a viewport height
                 vm.visibleItems();
-                setTimeout(done, 100);
+                setTimeout(done, 150);
               }, 100); // Wait for prior load to complete
             });
 
