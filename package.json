@@ -8,18 +8,15 @@
     "url": "http://mpj.me"
   },
   "description": "Virtual scroll component for Knockout.js",
-  "main": "lib/create_liar.js",
+  "main": "lib/giga-scroll.min.js",
   "dependencies": {},
   "devDependencies": {
     "mocha": "~1.6.0",
     "chai": "~1.2.0",
-    "growl": "~1.5.1",
     "grunt": "~0.3.17",
     "grunt-simple-mocha": "~0.2.0",
-    "grunt-bump": "~0.0.1"
-  },
-  "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --reporter spec"
+    "grunt-bump": "~0.0.1",
+    "grunt-closure-compiler": "0.0.13"
   },
   "repository": {
     "type": "git",
@@ -30,6 +27,7 @@
     "infinite scroll",
     "scroll",
     "virtual scroll",
+    "server scroll",
     "virtual",
     "mvvm"
   ],

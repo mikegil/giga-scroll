@@ -1,13 +1,7 @@
-var deferredComputed = function(fn) {
-  return ko.computed({
-    read: fn,
-    deferEvaluation: true
-  });
-};
+function GigaScrollViewModel(opts) {
 
-var DC = deferredComputed;
-
-function GigaScrollViewModel() {
+  // Shorthand to create a computed property with deferred evaluation.
+  function DC(fn) { return ko.computed({ read: fn, deferEvaluation: true }) }
 
   var self = this;
 
@@ -49,8 +43,6 @@ function GigaScrollViewModel() {
     _scrollPosition(y);
   }
 
-  self.getItemsMissing = null;
-
   var _visibleStartIndex = DC(function() {
     if (_scrollPosition() === null || _elementHeight() === null) {
       return null;
@@ -81,7 +73,7 @@ function GigaScrollViewModel() {
 
     clearTimeout(_getItemsMissingHandle);
     _getItemsMissingHandle = setTimeout(function (){
-      self.getItemsMissing(startIndex, length, function(items, numberOfServerItems) {
+      opts.load(startIndex, length, function(items, numberOfServerItems) {
         _numberOfServerItems(numberOfServerItems);
         for(var i = 0; i < length; i++) {
           _itemCache()[startIndex + i] = items[i];

@@ -14,15 +14,16 @@ describe('viewModel', function() {
   describe('when initialized', function () {
     beforeEach(function() {
       numberOfLoadsRequested = 0;
-      vm = new GigaScrollViewModel();
-      vm.getItemsMissing = function(index, length, callback) {
-        numberOfLoadsRequested++;
-        indexRequested = index;
-        lengthRequested = length;
-        setTimeout(function() {
-          callback(itemsLoaded, numberOfServerItems);
-        }, 25);
-      }
+      vm = new GigaScrollViewModel({
+        load: function(index, length, callback) {
+          numberOfLoadsRequested++;
+          indexRequested = index;
+          lengthRequested = length;
+          setTimeout(function() {
+            callback(itemsLoaded, numberOfServerItems);
+          }, 25);
+        }
+      });
     })
 
     it('should have an empty visibleItems', function() {
@@ -120,7 +121,7 @@ describe('viewModel', function() {
                 vm.setScrollPosition(8000-400); // half a viewport height
                 vm.visibleItems();
                 setTimeout(done, 150);
-              }, 100); // Wait for prior load to complete
+              }, 150); // Wait for prior load to complete
             });
 
             it('loads one screenheight up', function() {
