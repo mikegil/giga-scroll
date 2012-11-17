@@ -28,19 +28,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-bump');
   grunt.loadNpmTasks('grunt-closure-compiler');
 
-  grunt.registerTask('compile', 'Combines and minifies', function(){
+  grunt.registerTask('add-banner', 'Combines and minifies', function(){
 
-    var src = "";
-
-      /*
-    var coffee = require('coffee-script');
-    var js = coffee.compile(grunt.file.read('src/beautiful-lies.coffee'));
-    var banner = grunt.task.directive('<banner:meta.banner>', function() { return null; });
-    if (js) grunt.file.write('lib/beautiful-lies.js', banner + js);
-
-    js = coffee.compile(grunt.file.read('src/plugins.coffee'));
-    if (js) grunt.file.write('lib/plugins.js', js);*/
+    var banner = grunt.task.directive('<banner:meta.banner>', function() { return null });
+    var js = grunt.file.read('lib/giga-scroll.min.js');
+    grunt.file.write('lib/giga-scroll.min.js', banner + js);
   });
 
-  grunt.registerTask('build', 'closure-compiler');
+  grunt.registerTask('build', 'closure-compiler add-banner');
 };
