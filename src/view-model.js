@@ -47,7 +47,10 @@ function GigaScrollViewModel(opts) {
     if (_scrollPosition() === null || _elementHeight() === null) {
       return null;
     }
-    return Math.floor(_scrollPosition() / _elementHeight());
+    var lastIndex = _numberOfServerItems();
+    var lastStartIndex = lastIndex - _fitsInViewPort();
+    var indexAtScrollPosition = Math.floor(_scrollPosition() / _elementHeight());
+    return Math.min(lastStartIndex, indexAtScrollPosition);
   });
 
   var _fitsInViewPort = DC(function() {

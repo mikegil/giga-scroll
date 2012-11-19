@@ -187,14 +187,15 @@ describe('viewModel', function() {
         })
 
         describe('when scrolling a TINY bit', function() {
-          beforeEach(function() {
+          beforeEach(function(done) {
             vm.setScrollPosition(40); // half an item
+            setTimeout(done, 200)
           });
 
           it('doesnt move the offset', function() {
             vm.offsetTop().should.equal(0);
           })
-        })
+        });
 
         describe('when scrolling two times quickly', function() {
           beforeEach(function(done) {
@@ -216,6 +217,19 @@ describe('viewModel', function() {
 
           it('loads the data for the latest scroll position', function () {
             indexRequested.should.equal(20);
+          })
+
+        });
+
+        describe('when scrolling to the bottom', function() {
+          beforeEach(function(done) {
+            vm.setScrollPosition(7999200 + 100); // slightly more than
+                                                 // one viewport before the end
+            setTimeout(done, 200);
+          })
+
+          it('the list should not move past the end', function () {
+            vm.offsetTop().should.equal(7999200);
           })
 
         })
