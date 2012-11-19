@@ -9,17 +9,19 @@
       var templateEngine = createNativeStringTemplateEngine();
 
       templateEngine.addTemplate('gigaScroll', "\
-        <div id=\"viewport\">\
-          <div id=\"gigaDiv\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
-            <ul data-bind=\"foreach: visibleItems, style: { paddingTop: offsetTop() + 'px' }\">\
-              "+itemTemplate+"\
-            </ul>\
+        <div id=\"gigaViewport\">\
+          <div id=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
+            <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
+              <ul data-bind=\"foreach: visibleItems\">\
+                "+itemTemplate+"\
+              </ul>\
+            </div>\
           </div>\
         </div>");
 
       ko.renderTemplate("gigaScroll", viewModel, { templateEngine: templateEngine }, element, "replaceNode" );
 
-      var viewPort = document.getElementById('viewport');
+      var viewPort = document.getElementById('gigaViewport');
       viewPort.style.width = "100%";
       viewPort.style.height = "100%";
       viewPort.style.overflowY = "scroll";
@@ -41,16 +43,16 @@
       ul.style.border = 0;
 
       var onListItemInserted = function(e) {
-          if(e.target.nodeName !== "LI") {
-            return;
-          }
-          viewModel.setElementHeight(e.target.offsetHeight);
-          ul.removeEventListener("DOMNodeInserted", onListItemInserted, false);
+        if(e.target.nodeName !== "LI") {
+          return;
         }
-        ul.addEventListener("DOMNodeInserted", onListItemInserted, false);
-
-        viewModel.setElementHeight(20);
-
+        viewModel.setElementHeight(e.target.offsetHeight);
+        ul.removeEventListener("DOMNodeInserted", onListItemInserted, false);
       }
-    };
+      ul.addEventListener("DOMNodeInserted", onListItemInserted, false);
+
+      viewModel.setElementHeight(20);
+
+    }
+  };
 })();
