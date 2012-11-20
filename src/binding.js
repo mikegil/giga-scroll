@@ -53,6 +53,8 @@
 
       viewModel.setElementHeight(20);
 
+      return { controlsDescendantBindings: true };
+
     }
   };
 })();
