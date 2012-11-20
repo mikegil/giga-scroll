@@ -5,28 +5,87 @@
   </style>
   <body>
 
-    <ul data-bind="gigaScroll: gigaScrollViewModel">
-      <li><span data-bind="text: name" /></li>
+    <ul data-bind="gigaScroll: kittensGigaScroll">
+      <!-- ko if: $data -->
+        <li style="height:50px"><img data-bind="attr: { src: src }" /></li>
+      <!-- /ko -->
+      <!-- ko ifnot: $data -->
+        <li style="height:50px">Loading</li>
+      <!-- /ko-->
     </ul>
 
-    <script src="../vendor/jquery-1.8.2.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="../vendor/knockout-2.2.0.js"></script>
-    <script src="../lib/giga-scroll.min.js"></script>
+    <script src="../src/view-model.js"></script>
+    <script src="../src/string-template-engine.js"></script>
+    <script src="../src/binding.js"></script>
     <script src="fake-db.js"></script>
 
     <script>
-    var mainViewModel = {
-      _db: createFakeDatabase(),
-      gigaScrollViewModel: new GigaScrollViewModel({
-        load: function(startIndex, length, callback) {
-          mainViewModel._db.load(startIndex, length, function(items) {
-            callback(items, mainViewModel._db.totalSize);
+
+    function searchPhotos(tag, offset, length, callback) {
+      while(offset % length) { length++ }
+      var page = (offset / length) + 1;
+      var queryParameters = "method=flickr.photos.search&tags=kitten&per_page="+length+"&page="+page;
+      flickrAPI(queryParameters, function(data) {
+        var kittens = [];
+        $.each(data.photos.photo, function(i,item){
+          kittens.push({ id: item.id});
+        });
+        var totalServerItems = parseInt(data.photos.total);
+        callback(kittens, totalServerItems);
+      });
+    }
+
+    function getPhotoUrl(photoId, width, callback) {
+      var queryParameters = "method=flickr.photos.getSizes&photo_id="+photoId;
+      flickrAPI(queryParameters, function(data) {
+        data.sizes.size.forEach(function(size) {
+          if(parseInt(size.width) === width) {
+            callback(size.source)
+          }
+        });
+      })
+    }
+
+    function flickrAPI(queryParameters, callback) {
+      var url = "http://api.flickr.com/services/rest/?"+ queryParameters +
+      "&api_key=75ca5c9e6960db5e7120b1ad5bd9a547&format=json&jsoncallback=?";
+      $.getJSON(url, callback);
+    }
+
+    var PhotoViewModel = function(id) {
+      var _cachedUrl = ko.observable(false);
+      var _isInitialized = false;
+      this.loading = ko.computed(function() {
+        return !_cachedUrl();
+      })
+      this.src = ko.computed({
+        read: function() {
+          if (!_isInitialized) {
+            _isInitialized = true;
+            getPhotoUrl(id, 75, _cachedUrl);
+          }
+          return _cachedUrl();
+        }, deferEvaluation: true});
+    }
+
+    var viewModel = {
+      kittensGigaScroll: new GigaScrollViewModel({
+        load: function(index, length, callback) {
+          searchPhotos("kitten", index, length, function(photos, totalServerItems) {
+            var viewModels = [];
+            photos.forEach(function(photo) {
+              viewModels.push(new PhotoViewModel(photo.id));
+            });
+            console.log("viewModels", viewModels)
+            callback(viewModels, totalServerItems);
           });
         }
       })
     }
-    ko.applyBindings(mainViewModel);
-    </script>
+
+  ko.applyBindings(viewModel);</script>
 
     <!--  Automatic reload whenever something changes in your project directory,
         if you use LiveReload (http://livereload.com) -->
