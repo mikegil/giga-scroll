@@ -87,7 +87,7 @@ function GigaScrollViewModel(opts) {
         }
         _itemCache.valueHasMutated();
       });
-    }, 100);
+    }, 250);
 
   };
 
