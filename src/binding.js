@@ -26,12 +26,6 @@
       viewPort.style.height = "100%";
       viewPort.style.overflowY = "scroll";
 
-      var measureViewPort = function() {
-        viewModel.setViewPortHeight(viewPort.offsetHeight);
-      }
-      measureViewPort();
-      window.addEventListener('resize', measureViewPort);
-
       viewPort.addEventListener('scroll', function (e) {
         viewModel.setScrollPosition(viewPort.scrollTop);
       });
@@ -42,16 +36,86 @@
       ul.style.padding = 0;
       ul.style.border = 0;
 
+      var measureRows = function() {
+        var rows = {}
+        var longestRow = 0
+        var rowLength
+        var rowOffsetTops = []
+
+        $("#gigaRaft ul li").each(function() {
+          var yKey = this.offsetTop.toString()
+          if (!rows[yKey])
+            rows[yKey] = 1
+          else
+            rows[yKey]++
+        })
+
+        var rowKeys = []
+        for(key in rows) {
+          if (rows.hasOwnProperty(key))
+            rowKeys.push(key)
+        }
+
+        if (rowKeys <= 1) {
+          viewModel.setRowLength(6)
+        } else {
+          longestRow = 0
+
+          rowKeys.forEach(function(key) {
+            rowLength = rows[key]
+            if (rowLength > longestRow)
+              longestRow = rowLength
+
+            rowOffsetTops.push(key)
+          })
+
+          rowOffsetTops.sort()
+
+          var firstRowPosition = parseInt(rowOffsetTops[0]);
+          var secondRowPosition = parseInt(rowOffsetTops[1]);
+          var distance = secondRowPosition - firstRowPosition;
+
+          viewModel.setRowHeight(distance)
+          viewModel.setRowLength(longestRow)
+        }
+
+      }
+
+      var throttlingHandle;
+      var measureRowsThrottled = function() {
+        clearTimeout(throttlingHandle)
+        throttlingHandle = setTimeout(measureRows, 1000)
+      }
+
+      var measureRowsHandle;
       var onListItemInserted = function(e) {
+
         if(e.target.nodeName !== "LI") {
           return;
         }
-        viewModel.setElementHeight(e.target.offsetHeight);
+
+        $(e.target).find('img').each(function() {
+          var $img = $(this);
+          var loadHandler = function() {
+            measureRowsThrottled()
+            $img.off('load', loadHandler)
+          }
+          $img.on('load', loadHandler)
+        })
+        measureRowsThrottled()
+
         ul.removeEventListener("DOMNodeInserted", onListItemInserted, false);
       }
       ul.addEventListener("DOMNodeInserted", onListItemInserted, false);
 
-      viewModel.setElementHeight(20);
+      var measureStuff = function() {
+        measureRowsThrottled()
+        viewModel.setViewPortHeight(viewPort.offsetHeight);
+      }
+      measureStuff();
+      window.addEventListener('resize', measureStuff);
+
+      viewModel.setRowHeight(200);
 
       return { controlsDescendantBindings: true };
 

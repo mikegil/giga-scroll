@@ -26,39 +26,43 @@ function GigaScrollViewModel(opts) {
   });
 
   self.offsetTop = DC(function() {
-    return _visibleStartIndex() * _elementHeight();
+    return Math.floor(_visibleStartIndex() / _rowLength()) * _rowHeight() ;
   });
 
   self.gigaDivHeight = DC(function() {
-    return _numberOfServerItems() * _elementHeight();
+    return Math.floor(_numberOfServerItems() / _rowLength()) * _rowHeight();
   });
 
   self.setViewPortHeight = function(height)  {
     _viewPortHeight(height);
   }
-  self.setElementHeight = function(height)  {
-    _elementHeight(height);
+  self.setRowHeight = function(height)  {
+    _rowHeight(height);
   }
   self.setScrollPosition = function(y) {
     _scrollPosition(y);
   }
+  self.setRowLength = function(rowLength) {
+    _rowLength(rowLength);
+  }
 
   var _visibleStartIndex = DC(function() {
-    if (_scrollPosition() === null || _elementHeight() === null) {
+    if (_scrollPosition() === null || _rowHeight() === null) {
       return null;
     }
     var lastIndex = _numberOfServerItems();
     var lastStartIndex = lastIndex - _fitsInViewPort();
-    var indexAtScrollPosition = Math.floor(_scrollPosition() / _elementHeight());
+    var rowAtScrollPosition = Math.floor(_scrollPosition() / _rowHeight());
+    var indexAtScrollPosition = (rowAtScrollPosition) * _rowLength();
     return Math.min(lastStartIndex, indexAtScrollPosition);
   });
 
   var _fitsInViewPort = DC(function() {
-    if (_viewPortHeight() === null || _elementHeight() === null) {
+    if (_viewPortHeight() === null || _rowHeight() === null) {
       return null;
     }
-    var val = Math.ceil(_viewPortHeight() / _elementHeight());
-    return val;
+    var val = Math.ceil(_viewPortHeight() / _rowHeight()) * _rowLength();
+    return val ;
   });
 
   var _getItemsMissingHandle = null;
@@ -90,7 +94,8 @@ function GigaScrollViewModel(opts) {
   var _itemCache = ko.observableArray();
   var _numberOfServerItems = ko.observable(null);
   var _viewPortHeight = ko.observable(null);
-  var _elementHeight = ko.observable(null);
+  var _rowHeight = ko.observable(null);
   var _scrollPosition = ko.observable(0);
+  var _rowLength = ko.observable(1)
 
 }

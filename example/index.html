@@ -2,20 +2,47 @@
   <title>GigaScroll example</title>
   <style>
     body {  margin: 0; padding: 0; }
+    #debug {
+      position: absolute;
+      right: 40px;
+      top: 0;
+    }
+    li {
+      display: inline-block;
+      width: 200px;
+      height: 200px;
+      border: 0;
+      padding: 0;
+      margin: 0;
+    }
+    li img {
+      width: 100%;
+      height: 100%;
+    }
   </style>
   <body>
 
+    <div id="debug">
+     <div>Items: <span data-bind="text: numberOfItemsText" /></div>
+     <div>index: <span data-bind="text: indexText" /></div>
+     <div>length: <span data-bind="text: lengthText" /></div>
+     <div>vpHeight: <span data-bind="text: kittensGigaScroll.gigaDivHeight" /></div>
+     <div>status: <span data-bind="text: statusText" /></div>
+     <div>scrollPosition: <span data-bind="text: kittensGigaScroll.scrollPosition" /></div>
+    </div>
+
     <ul data-bind="gigaScroll: kittensGigaScroll">
       <!-- ko if: $data -->
-        <li style="height:50px"><img data-bind="attr: { src: src }" /></li>
+        <li><img data-bind="attr: { src: src }" /></li>
       <!-- /ko -->
       <!-- ko ifnot: $data -->
-        <li style="height:50px">Loading</li>
+        <li>Loading</li>
       <!-- /ko-->
     </ul>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
     <script src="../vendor/knockout-2.2.0.js"></script>
+    <script src="https://raw.github.com/mbest/knockout-deferred-updates/master/knockout-deferred-updates.js"></script>
     <script src="../src/view-model.js"></script>
     <script src="../src/string-template-engine.js"></script>
     <script src="../src/binding.js"></script>
@@ -24,16 +51,35 @@
     <script>
 
     function searchPhotos(tag, offset, length, callback) {
-      while(offset % length) { length++ }
-      var page = (offset / length) + 1;
+      // FUCKING twitter API. :P
+      // I need some help thinking here to convert offset/length
+      // to per-page and number of pages.
+      // Probably need to back up and throw the rest of the result away
+      var originalLength = length;
+      var page;
+      var discard = 0
+      if (offset / length < 1) {
+        page = 0
+        discard = offset
+        console.log("offset/length less than 1", offset, length)
+      } else {
+        console.log("offset/length more than 1")
+        while(offset % length) { length++ }
+        console.log("lengthened from", originalLength, "to", length)
+        page = (offset / length) + 1
+      }
       var queryParameters = "method=flickr.photos.search&tags=kitten&per_page="+length+"&page="+page;
       flickrAPI(queryParameters, function(data) {
         var kittens = [];
-        $.each(data.photos.photo, function(i,item){
-          kittens.push({ id: item.id});
-        });
+
+        var item;
+        for (var i = discard; i < originalLength; i++) {
+          item = data.photos.photo[i];
+          if(item)
+            kittens.push({ id: item.id});
+        }
         var totalServerItems = parseInt(data.photos.total);
-        callback(kittens, totalServerItems);
+        callback(kittens.slice(0, originalLength), Math.min(100003, totalServerItems));
       });
     }
 
@@ -50,7 +96,7 @@
 
     function flickrAPI(queryParameters, callback) {
       var url = "http://api.flickr.com/services/rest/?"+ queryParameters +
-      "&api_key=75ca5c9e6960db5e7120b1ad5bd9a547&format=json&jsoncallback=?";
+      "&api_key=57195bc7d09e7789cb5fbb7e371bb836&format=json&jsoncallback=?";
       $.getJSON(url, callback);
     }
 
@@ -73,16 +119,29 @@
     var viewModel = {
       kittensGigaScroll: new GigaScrollViewModel({
         load: function(index, length, callback) {
+          console.log("Loading", index, length)
+          viewModel.indexText(index)
+          viewModel.lengthText(length)
+          viewModel.statusText("Loading")
           searchPhotos("kitten", index, length, function(photos, totalServerItems) {
+            console.log("callback from search")
             var viewModels = [];
             photos.forEach(function(photo) {
               viewModels.push(new PhotoViewModel(photo.id));
             });
             console.log("viewModels", viewModels)
             callback(viewModels, totalServerItems);
+            viewModel.numberOfItemsText(totalServerItems)
+            //viewModel.indexText("None")
+            //viewModel.lengthText("None")
+            viewModel.statusText("Idle")
           });
         }
-      })
+      }),
+      numberOfItemsText: ko.observable(),
+      indexText: ko.observable(),
+      lengthText: ko.observable(),
+      statusText: ko.observable()
     }
 
   ko.applyBindings(viewModel);</script>

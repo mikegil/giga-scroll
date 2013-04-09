@@ -69,7 +69,7 @@ describe('viewModel', function() {
       describe('when viewPortHeight and elementHeight is assigned', function() {
         beforeEach(function(done) {
           vm.setViewPortHeight(800);
-          vm.setElementHeight(80);
+          vm.setRowHeight(80);
           vm.visibleItems();
           setTimeout(done, 100);
         })
@@ -240,7 +240,7 @@ describe('viewModel', function() {
       describe('when uneven viewPortHeight and elementHeight are assigned', function (){
         beforeEach(function() {
           vm.setViewPortHeight(714);
-          vm.setElementHeight(71);
+          vm.setRowHeight(71);
         });
 
         it('rounds upwards', function() {
