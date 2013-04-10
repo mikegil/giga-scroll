@@ -1,5 +1,8 @@
 (function() {
 
+  var GUESSTIMATED_ROW_LENGTH = 6
+  var GUESSTIMATED_ROW_HEIGHT = 200
+
   ko.bindingHandlers.gigaScroll = {
     init: function(element, valueAccessor, allBindingsAccessor) {
       var viewModel = valueAccessor();
@@ -32,68 +35,74 @@
 
       var ul = viewPort.getElementsByTagName('UL')[0];
 
-      ul.style.margin = 0;
-      ul.style.padding = 0;
-      ul.style.border = 0;
+      var offsets = ko.observableArray();
 
-      var measureRows = function() {
-        var rows = {}
-        var longestRow = 0
-        var rowLength
-        var rowOffsetTops = []
+      function refreshOffsets() {
+        var offset,
+            mutated = false,
+            underlyingArray = offsets.peek()
+            elements = ul.getElementsByTagName('li')
 
-        $("#gigaRaft ul li").each(function() {
-          var yKey = this.offsetTop.toString()
-          if (!rows[yKey])
-            rows[yKey] = 1
-          else
-            rows[yKey]++
+        for (var i = 0; i < elements.length; i++) {
+          offset = elements[i].offsetTop
+          if (underlyingArray[i] !== offset) {
+            underlyingArray[i] = offset
+            mutated = true
+          }
+        }
+        if (mutated) offsets.valueHasMutated()
+      }
+
+      var offsetMap = ko.computed(function() {
+        var map = {}
+        offsets().forEach(function(offset) {
+          key = offset.toString()
+          map[key] = map[key] ? map[key] + 1 : 1
+        })
+        return map
+      })
+
+      var uniqueOffsets = ko.computed(function() {
+        var unique = []
+        for(key in offsetMap()) {
+          unique.push(parseInt(key))
+        }
+        return unique;
+      })
+
+      ko.computed(function() {
+        var offsets = uniqueOffsets()
+        offsets.sort()
+        if (offsets.length <= 1) viewModel.setRowHeight(GUESSTIMATED_ROW_HEIGHT)
+        viewModel.setRowHeight(offsets[1] - offsets[0])
+      })
+
+      ko.computed(function() {
+
+        if (offsets().length <= 1) {
+          viewModel.setRowLength(GUESSTIMATED_ROW_LENGTH)
+          return
+        }
+
+        var longestRow
+        uniqueOffsets().forEach(function(offset) {
+          rowLength = offsetMap()[offset.toString()]
+          if (!longestRow || rowLength > longestRow)
+            longestRow = rowLength
         })
 
-        var rowKeys = []
-        for(key in rows) {
-          if (rows.hasOwnProperty(key))
-            rowKeys.push(key)
-        }
+        viewModel.setRowLength(longestRow)
+      })
 
-        if (rowKeys <= 1) {
-          viewModel.setRowLength(6)
-        } else {
-          longestRow = 0
-
-          rowKeys.forEach(function(key) {
-            rowLength = rows[key]
-            if (rowLength > longestRow)
-              longestRow = rowLength
-
-            rowOffsetTops.push(key)
-          })
-
-          rowOffsetTops.sort()
-
-          var firstRowPosition = parseInt(rowOffsetTops[0]);
-          var secondRowPosition = parseInt(rowOffsetTops[1]);
-          var distance = secondRowPosition - firstRowPosition;
-
-          viewModel.setRowHeight(distance)
-          viewModel.setRowLength(longestRow)
-        }
-
-      }
 
       var throttlingHandle;
       var measureRowsThrottled = function() {
         clearTimeout(throttlingHandle)
-        throttlingHandle = setTimeout(measureRows, 1000)
+        throttlingHandle = setTimeout(refreshOffsets, 1000)
       }
 
-      var measureRowsHandle;
       var onListItemInserted = function(e) {
-
-        if(e.target.nodeName !== "LI") {
-          return;
-        }
-
+        if(e.target.nodeName !== "LI") return
         $(e.target).find('img').each(function() {
           var $img = $(this);
           var loadHandler = function() {
