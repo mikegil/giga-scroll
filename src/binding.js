@@ -29,11 +29,14 @@
       }
       renderTemplate()
 
+      function watchScrollPosition() {
+        _viewPort.addEventListener('scroll', function (e) {
+          viewModel.setScrollPosition(_viewPort.scrollTop);
+        });
+      }
+      watchScrollPosition()
 
 
-      _viewPort.addEventListener('scroll', function (e) {
-        viewModel.setScrollPosition(_viewPort.scrollTop);
-      });
 
 
       var offsets = ko.observableArray();
