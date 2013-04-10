@@ -6,34 +6,35 @@
   ko.bindingHandlers.gigaScroll = {
     init: function(element, valueAccessor, allBindingsAccessor) {
       var viewModel = valueAccessor();
+      var _viewPort;
+      var ul;
 
-      var itemTemplate = element.innerHTML;
-
-      var templateEngine = createNativeStringTemplateEngine();
-
-      templateEngine.addTemplate('gigaScroll', "\
-        <div id=\"gigaViewport\">\
-          <div id=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
-            <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
-              <ul data-bind=\"foreach: visibleItems\">\
-                "+itemTemplate+"\
-              </ul>\
+      function renderTemplate() {
+        var itemTemplate = element.innerHTML;
+        var templateEngine = createNativeStringTemplateEngine();
+        templateEngine.addTemplate('gigaScroll', "\
+          <div id=\"gigaViewport\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
+            <div id=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
+              <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
+                <ul data-bind=\"foreach: visibleItems\">\
+                  "+itemTemplate+"\
+                </ul>\
+              </div>\
             </div>\
-          </div>\
-        </div>");
+          </div>");
+        ko.renderTemplate(
+          "gigaScroll", viewModel, { templateEngine: templateEngine }, element, "replaceNode" )
+        _viewPort = document.getElementById('gigaViewport');
+        ul = _viewPort.getElementsByTagName('UL')[0];
+      }
+      renderTemplate()
 
-      ko.renderTemplate("gigaScroll", viewModel, { templateEngine: templateEngine }, element, "replaceNode" );
 
-      var viewPort = document.getElementById('gigaViewport');
-      viewPort.style.width = "100%";
-      viewPort.style.height = "100%";
-      viewPort.style.overflowY = "scroll";
 
-      viewPort.addEventListener('scroll', function (e) {
-        viewModel.setScrollPosition(viewPort.scrollTop);
+      _viewPort.addEventListener('scroll', function (e) {
+        viewModel.setScrollPosition(_viewPort.scrollTop);
       });
 
-      var ul = viewPort.getElementsByTagName('UL')[0];
 
       var offsets = ko.observableArray();
 
@@ -119,7 +120,7 @@
 
       var measureStuff = function() {
         measureRowsThrottled()
-        viewModel.setViewPortHeight(viewPort.offsetHeight);
+        viewModel.setViewPortHeight(_viewPort.offsetHeight);
       }
       measureStuff();
       window.addEventListener('resize', measureStuff);
