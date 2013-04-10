@@ -7,7 +7,9 @@
     init: function(element, valueAccessor, allBindingsAccessor) {
       var viewModel = valueAccessor();
       var _viewPort;
+      var _offsets = ko.observableArray();
       var ul;
+      var throttlingHandle;
 
       function renderTemplate() {
         var itemTemplate = element.innerHTML;
@@ -38,13 +40,10 @@
 
 
 
-
-      var offsets = ko.observableArray();
-
       function refreshOffsets() {
         var offset,
             mutated = false,
-            underlyingArray = offsets.peek()
+            underlyingArray = _offsets.peek()
             elements = ul.getElementsByTagName('li')
 
         for (var i = 0; i < elements.length; i++) {
@@ -54,81 +53,96 @@
             mutated = true
           }
         }
-        if (mutated) offsets.valueHasMutated()
+        if (mutated) _offsets.valueHasMutated()
       }
 
-      var offsetMap = ko.computed(function() {
-        var map = {}
-        offsets().forEach(function(offset) {
-          key = offset.toString()
-          map[key] = map[key] ? map[key] + 1 : 1
-        })
-        return map
-      })
-
-      var uniqueOffsets = ko.computed(function() {
-        var unique = []
-        for(key in offsetMap()) {
-          unique.push(parseInt(key))
+      var offsetMap = ko.computed({
+        deferEvaluation: true,
+        read: function() {
+          var map = {}
+          _offsets().forEach(function(offset) {
+            key = offset.toString()
+            map[key] = map[key] ? map[key] + 1 : 1
+          })
+          return map
         }
-        return unique;
       })
 
-      ko.computed(function() {
-        var offsets = uniqueOffsets()
-        offsets.sort()
-        if (offsets.length <= 1) viewModel.setRowHeight(GUESSTIMATED_ROW_HEIGHT)
-        viewModel.setRowHeight(offsets[1] - offsets[0])
-      })
-
-      ko.computed(function() {
-
-        if (offsets().length <= 1) {
-          viewModel.setRowLength(GUESSTIMATED_ROW_LENGTH)
-          return
+      var uniqueOffsets = ko.computed({
+        deferEvaluation: true,
+        read: function() {
+          var unique = []
+          for(key in offsetMap()) {
+            unique.push(parseInt(key))
+          }
+          return unique;
         }
-
-        var longestRow
-        uniqueOffsets().forEach(function(offset) {
-          rowLength = offsetMap()[offset.toString()]
-          if (!longestRow || rowLength > longestRow)
-            longestRow = rowLength
-        })
-
-        viewModel.setRowLength(longestRow)
       })
 
+      function watchRowHeight() {
+        ko.computed(function() {
+          var _offsets = uniqueOffsets()
+          _offsets.sort()
+          if (_offsets.length <= 1)
+            viewModel.setRowHeight(GUESSTIMATED_ROW_HEIGHT)
+          else
+            viewModel.setRowHeight(_offsets[1] - _offsets[0])
+        })
+      }
+      watchRowHeight()
 
-      var throttlingHandle;
+      function watchRowLength() {
+        ko.computed(function() {
+          if (_offsets().length <= 1) {
+            viewModel.setRowLength(GUESSTIMATED_ROW_LENGTH)
+            return
+          }
+
+          var longestRow
+          uniqueOffsets().forEach(function(offset) {
+            rowLength = offsetMap()[offset.toString()]
+            if (!longestRow || rowLength > longestRow)
+              longestRow = rowLength
+          })
+
+          viewModel.setRowLength(longestRow)
+        })
+      }
+      watchRowLength()
+
       var measureRowsThrottled = function() {
         clearTimeout(throttlingHandle)
         throttlingHandle = setTimeout(refreshOffsets, 1000)
       }
 
-      var onListItemInserted = function(e) {
-        if(e.target.nodeName !== "LI") return
-        $(e.target).find('img').each(function() {
-          var $img = $(this);
-          var loadHandler = function() {
-            measureRowsThrottled()
-            $img.off('load', loadHandler)
-          }
-          $img.on('load', loadHandler)
-        })
-        measureRowsThrottled()
+      function watchListItemsOffsets() {
+        var onListItemInserted = function(e) {
+          if(e.target.nodeName !== "LI") return
+          $(e.target).find('img').each(function() {
+            var $img = $(this);
+            var loadHandler = function() {
+              measureRowsThrottled()
+              $img.off('load', loadHandler)
+            }
+            $img.on('load', loadHandler)
+          })
+          measureRowsThrottled()
 
-        ul.removeEventListener("DOMNodeInserted", onListItemInserted, false);
+          ul.removeEventListener("DOMNodeInserted", onListItemInserted, false);
+        }
+        ul.addEventListener("DOMNodeInserted", onListItemInserted, false);
       }
-      ul.addEventListener("DOMNodeInserted", onListItemInserted, false);
+      watchListItemsOffsets()
 
-      var measureStuff = function() {
-        measureRowsThrottled()
-        viewModel.setViewPortHeight(_viewPort.offsetHeight);
+      function watchViewPortHeight() {
+        var onViewPortResize = function() {
+          measureRowsThrottled()
+          viewModel.setViewPortHeight(_viewPort.offsetHeight)
+        }
+        window.addEventListener('resize', onViewPortResize)
+        onViewPortResize()
       }
-      measureStuff();
-      window.addEventListener('resize', measureStuff);
-
-      viewModel.setRowHeight(200);
+      watchViewPortHeight()
 
       return { controlsDescendantBindings: true };
 
