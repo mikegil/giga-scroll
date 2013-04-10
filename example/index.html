@@ -51,24 +51,23 @@
     <script>
 
     function searchPhotos(tag, offset, length, callback) {
-      // FUCKING twitter API. :P
-      // I need some help thinking here to convert offset/length
-      // to per-page and number of pages.
-      // Probably need to back up and throw the rest of the result away
+
+
+      // Because Twitters API accepts per_page and page
+      // we need to translate from offset/length
       var originalLength = length;
       var page;
-      var discard = 0
+      var discard
       if (offset / length < 1) {
         page = 0
         discard = offset
-        console.log("offset/length less than 1", offset, length)
       } else {
-        console.log("offset/length more than 1")
         while(offset % length) { length++ }
-        console.log("lengthened from", originalLength, "to", length)
-        page = (offset / length) + 1
+        page = offset / length + 1
+        discard = 0
       }
-      var queryParameters = "method=flickr.photos.search&tags=kitten&per_page="+length+"&page="+page;
+
+      var queryParameters = "method=flickr.photos.search&tags="+tag+"&per_page="+length+"&page="+page;
       flickrAPI(queryParameters, function(data) {
         var kittens = [];
 
@@ -119,21 +118,15 @@
     var viewModel = {
       kittensGigaScroll: new GigaScrollViewModel({
         load: function(index, length, callback) {
-          console.log("Loading", index, length)
           viewModel.indexText(index)
           viewModel.lengthText(length)
-          viewModel.statusText("Loading")
           searchPhotos("kitten", index, length, function(photos, totalServerItems) {
-            console.log("callback from search")
             var viewModels = [];
             photos.forEach(function(photo) {
               viewModels.push(new PhotoViewModel(photo.id));
             });
-            console.log("viewModels", viewModels)
             callback(viewModels, totalServerItems);
             viewModel.numberOfItemsText(totalServerItems)
-            //viewModel.indexText("None")
-            //viewModel.lengthText("None")
             viewModel.statusText("Idle")
           });
         }
