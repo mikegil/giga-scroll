@@ -1,11 +1,75 @@
 function GigaScrollViewModel(opts) {
 
+  var sinceEpoch = function() {
+    return Number(new Date())
+  }
+  var start = sinceEpoch()
+  var sinceStart = function() {
+    return sinceEpoch() - start
+  }
+
+  /*
+   * This is a general-purpose "notifyComparer" extender that can be chained
+   * onto any observable or computed value. It causes the target only to
+   * issue change notifications when the equalityComparer says the value has changed.
+   * */
+  ko.extenders.notifyComparer = function(target, equalityComparer) {
+      var valueToNotify = ko.observable();
+      valueToNotify.equalityComparer = function(x, y) {
+        var i;
+        if (Array.isArray(x)) {
+          if (Array.isArray(y)) {
+            if (x.length !== y.length) {
+              return false;
+            }
+            for(i = 0; i < x.length; i++) {
+              if (!equalityComparer(x[i], y[i])) {
+                return false;
+              }
+            }
+            return true;
+          }
+          return false;
+        }
+        return equalityComparer(x, y)
+      }
+      target.subscribe(valueToNotify);
+      var firstRead = true;
+      return ko.computed({
+        deferEvaluation: true,
+        read: function(){
+          if (firstRead) {
+            firstRead = false;
+            valueToNotify(target.peek());
+          }
+          return valueToNotify();
+      } });
+  };
+
+
   // Shorthand to create a computed property with deferred evaluation.
-  function DC(fn) { return ko.computed({ read: fn, deferEvaluation: true }) }
+  function computedLazy(fn) {
+    return ko.computed({
+      read: fn,
+      deferEvaluation: true
+    }).extend({
+      notifyComparer: opts.equalityComparer || simpleComparer
+    })
+  }
+
+  function simpleComparer(x, y) {
+    return x === y
+  }
+
+
 
   var self = this;
 
-  self.visibleItems = DC(function() {
+  self.sample = function(sampleSize) {
+    _sampling(sampleSize)
+  }
+
+  self.visibleItems = computedLazy(function() {
     var i, loadStartIndex, loadLength, oneViewPortAboveIndex, visibles;
 
     if (_visibleStartIndex() === null || _fitsInViewPort === null) {
@@ -22,44 +86,58 @@ function GigaScrollViewModel(opts) {
     for (i = 0; i < _fitsInViewPort(); i++) {
       visibles[i] = _itemCache()[_visibleStartIndex() + i];
     }
+
     return visibles;
   });
 
-  self.offsetTop = DC(function() {
+  self.offsetTop = computedLazy(function() {
     return Math.floor(_visibleStartIndex() / _rowLength()) * _rowHeight() ;
   });
 
-  self.gigaDivHeight = DC(function() {
+  self.gigaDivHeight = computedLazy(function() {
     return Math.floor(_numberOfServerItems() / _rowLength()) * _rowHeight();
   });
 
-  self.setViewPortHeight = function(height)  {
+  self.setViewPortHeight = function(height) {
+    if(!_sampling())
+      throw new Error("Call sample and then render and measure the resulting " +
+                      "visibleItems before calling setViewPortHeight.")
     _viewPortHeight(height);
   }
   self.setRowHeight = function(height)  {
+    if(!_sampling())
+      throw new Error("Call sample and then render and measure the resulting " +
+                      "visibleItems before calling setRowHeight.")
     _rowHeight(height);
+  }
+  self.setRowLength = function(rowLength) {
+    if(!_sampling())
+      throw new Error("Call sample and then render and measure the resulting " +
+                      "visibleItems before calling setRowLength.")
+    _rowLength(rowLength);
   }
   self.setScrollPosition = function(y) {
     _scrollPosition(y);
   }
-  self.setRowLength = function(rowLength) {
-    _rowLength(rowLength);
-  }
 
-  var _visibleStartIndex = DC(function() {
-    if (_scrollPosition() === null || _rowHeight() === null) {
-      return null;
+
+  var _visibleStartIndex = computedLazy(function() {
+    if (_rowHeight() === null) {
+      // _rowHeight is required to calculate,
+      // but if we have a sampling, we're still okay:
+      return !!_sampling() ? 0 : null
     }
+    var rowAtScrollPosition = Math.floor(_scrollPosition() / _rowHeight());
     var lastIndex = _numberOfServerItems();
     var lastStartIndex = lastIndex - _fitsInViewPort();
-    var rowAtScrollPosition = Math.floor(_scrollPosition() / _rowHeight());
     var indexAtScrollPosition = (rowAtScrollPosition) * _rowLength();
     return Math.min(lastStartIndex, indexAtScrollPosition);
   });
 
-  var _fitsInViewPort = DC(function() {
+  var _fitsInViewPort = computedLazy(function() {
+
     if (_viewPortHeight() === null || _rowHeight() === null) {
-      return null;
+      return _sampling() || null
     }
     var val = Math.ceil(_viewPortHeight() / _rowHeight()) * _rowLength();
     return val ;
@@ -97,5 +175,6 @@ function GigaScrollViewModel(opts) {
   var _rowHeight = ko.observable(null);
   var _scrollPosition = ko.observable(0);
   var _rowLength = ko.observable(1)
+  var _sampling = ko.observable(null)
 
 }

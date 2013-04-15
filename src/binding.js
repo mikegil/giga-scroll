@@ -1,18 +1,35 @@
 (function() {
 
-var GUESSTIMATED_ROW_LENGTH = 6
-var GUESSTIMATED_ROW_HEIGHT = 200
+  var sinceEpoch = function() {
+    return Number(new Date())
+  }
+  var start = sinceEpoch()
+  var sinceStart = function() {
+    return sinceEpoch() - start
+  }
 
 ko.bindingHandlers.gigaScroll = {
   init: function(element, valueAccessor, allBindingsAccessor) {
 
-    var viewModel     = valueAccessor()
+    var viewModel     = ko.utils.unwrapObservable(valueAccessor())
+    // TODO rename this to view
     var viewPort      = createViewPort(viewModel, element)
     var offsetCache   = watchListItemsOffsets(viewPort)
 
-    watchViewPortScrollPosition (viewModel, viewPort)
-    watchViewPortHeight         (viewModel, viewPort)
-    watchRows                   (viewModel, offsetCache)
+    viewModel.sample(15)
+
+    var initialized = false
+    viewModel.visibleItems.subscribe(function(newValue) {
+      if (!newValue[newValue.length-1]) return;
+      if (initialized) return;
+      initialized = true
+      setTimeout(function() {
+        watchViewPortScrollPosition (viewModel, viewPort)
+        watchViewPortHeight         (viewModel, viewPort)
+        watchRows                   (viewModel, offsetCache)
+      }, 250)
+
+    })
 
     return { controlsDescendantBindings: true }
 
@@ -26,7 +43,7 @@ function createViewPort(viewModel, itemTemplateElement) {
     <div id=\"gigaViewport\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
       <div id=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
         <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
-          <ul data-bind=\"foreach: visibleItems\">\
+          <ul class=\"sp-grid\" data-bind=\"foreach: visibleItems\">\
             "+itemTemplate+"\
           </ul>\
         </div>\
@@ -61,36 +78,52 @@ function watchRows(viewModel, offsetCache) {
   function watchRowHeight() {
     ko.computed(function() {
       var uniques = uniqueOffsets()
-      uniques.sort()
+      uniques.sort(function(a,b){return a-b})
       if (uniques.length <= 1)
-        viewModel.setRowHeight(GUESSTIMATED_ROW_HEIGHT)
-      else
-        viewModel.setRowHeight(uniques[1] - uniques[0])
+        singleRowCaseWarning()
+      else {
+        var val = uniques[1] - uniques[0]
+        console.log("rowHeight measured at", sinceStart(), "to", val)
+        viewModel.setRowHeight(val)
+      }
+
     })
   }
 
   function watchRowLength() {
     ko.computed(function() {
+      var longestRow,
+          rowLength
+
       if (offsetCache().length <= 1) {
-        viewModel.setRowLength(GUESSTIMATED_ROW_LENGTH)
+        singleRowCaseWarning()
         return
       }
 
-      var longestRow
       uniqueOffsets().forEach(function(offset) {
         rowLength = offsetMap()[offset.toString()]
         if (!longestRow || rowLength > longestRow)
           longestRow = rowLength
       })
 
+      console.log("rowLength measured at", sinceStart(), "to", longestRow)
+
       viewModel.setRowLength(longestRow)
     })
+  }
+
+  function singleRowCaseWarning() {
+    console.warn( "Tried to measure rowLength, but failed because the" +
+                  "set was too small to fill one row. If there are more " +
+                  "items on the server, this means that we need to load more " +
+                  "but if there isn't, it's due to an edge case that GigaScroll " +
+                  "does not yet support. ")
   }
 
   var uniqueOffsets = ko.computed({
     read: function() {
       var unique = []
-      for(key in offsetMap()) {
+      for(var key in offsetMap()) {
         unique.push(parseInt(key))
       }
       return unique;
@@ -100,7 +133,7 @@ function watchRows(viewModel, offsetCache) {
 
   var offsetMap = ko.computed({
     read: function() {
-      var map = {}
+      var key, map = {}
       offsetCache().forEach(function(offset) {
         key = offset.toString()
         map[key] = map[key] ? map[key] + 1 : 1
@@ -118,10 +151,9 @@ function watchListItemsOffsets(viewPort) {
   function exec() {
     offsetCache = ko.observableArray()
 
-    ULElement.addEventListener(
-      'DOMNodeInserted', measureRowsThrottled, false)
-    window.addEventListener(
-      'resize',          measureRowsThrottled, false)
+    ULElement.addEventListener('DOMNodeInserted', measureRowsThrottled, false)
+    window.   addEventListener('resize',          measureRowsThrottled, false)
+    window.   addEventListener('scroll',          measureRowsThrottled, false)
     measureRowsThrottled()
 
     return offsetCache
@@ -130,7 +162,7 @@ function watchListItemsOffsets(viewPort) {
   function refreshOffsetCache() {
     var offset,
         mutated = false,
-        underlyingArray = offsetCache.peek()
+        underlyingArray = offsetCache.peek(),
         elements = ULElement.getElementsByTagName('li')
 
     for (var i = 0; i < elements.length; i++) {
@@ -145,7 +177,7 @@ function watchListItemsOffsets(viewPort) {
 
   var measureRowsThrottled = function() {
     clearTimeout(offsetMeasuringHandle)
-    offsetMeasuringHandle = setTimeout(refreshOffsetCache, 1000)
+    offsetMeasuringHandle = setTimeout(refreshOffsetCache, 16)
   }
 
   var ULElement = viewPort.getElementsByTagName('UL')[0]
