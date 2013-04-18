@@ -6,8 +6,7 @@ ko.bindingHandlers.gigaScroll = {
     var viewModel     = ko.utils.unwrapObservable(valueAccessor())
     var view          = createView(viewModel, element)
 
-
-    viewModel.sample(7)
+    viewModel.sample(7) // TODO: Make this a dynamic option
 
     // Wait for the sample to render before triggering
     // the measurment watchers.
