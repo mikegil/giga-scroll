@@ -69,10 +69,14 @@ function GigaScrollViewModel(opts) {
     _sampling(sampleSize)
   }
 
+  self.setActive = function(value) {
+    _isActive(value)
+  }
+
   self.visibleItems = computedLazy(function() {
     var i, loadStartIndex, loadLength, oneViewPortAboveIndex, visibles;
 
-    if (_visibleStartIndex() === null || _fitsInViewPort === null) {
+    if (!_isActive() || _visibleStartIndex() === null || _fitsInViewPort === null) {
       return [];
     }
 
@@ -183,5 +187,6 @@ function GigaScrollViewModel(opts) {
   var _scrollPosition = ko.observable(0);
   var _rowLength = ko.observable(1)
   var _sampling = ko.observable(null)
+  var _isActive = ko.observable(true)
 
 }

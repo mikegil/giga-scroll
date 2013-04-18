@@ -6,6 +6,7 @@ ko.bindingHandlers.gigaScroll = {
     var viewModel     = ko.utils.unwrapObservable(valueAccessor())
     var view          = createView(viewModel, element)
 
+    viewModel.setActive(false)
     viewModel.sample(7) // TODO: Make this a dynamic option
 
     // Wait for the sample to render before triggering
@@ -44,7 +45,7 @@ function createView(viewModel, originalListElement) {
       <div id=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
         <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
           <ul id=\"gigaList\" data-bind=\"foreach: visibleItems\">\
-            " +  templateListItem+ "\
+            " +  templateListItem + "\
           </ul>\
         </div>\
       </div>\

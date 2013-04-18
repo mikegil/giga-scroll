@@ -1,162 +1,12 @@
-  mocha.setup('bdd');
+mocha.setup('bdd');
 chai.should();
 var expect = chai.expect;
 
-var vm = null;
-var numberOfLoadsRequested = 0;
-var indexRequested = null;
-var lengthRequested = null;
-/*
-var fakeItems = [
-          { name: 'name0' },
-          { name: 'name1' },
-          { name: 'Olivia' },
-          { name: 'Peter' },
-          { name: 'Walter' },
-
-          { name: 'Astrid1' },
-          { name: 'Newton' },
-          { name: 'Broyles' },
-          { name: 'William' },
-          { name: 'Walternate' },
-
-          { name: 'Ninja1' },
-          { name: 'Johanna' },
-          { name: 'Martin' },
-          { name: 'Kalle' },
-          { name: 'Hogga' },
-
-          { name: 'Nisse' },
-          { name: 'Göran' },
-          { name: 'Kerstin' },
-          { name: 'Amanda' },
-          { name: 'Ludde' },
-
-          { name: 'John2' },
-          { name: 'Priscilla2' },
-          { name: 'Olivia' },
-          { name: 'Peter' },
-          { name: 'Walter' },
-
-          { name: 'Astrid2' },
-          { name: 'Newton' },
-          { name: 'Broyles' },
-          { name: 'William' },
-          { name: 'Walternate' },
-
-          { name: 'Ninja2' },
-          { name: 'Johanna' },
-          { name: 'Martin' },
-          { name: 'Kalle' },
-          { name: 'Hogga' },
-
-          { name: 'Nisse' },
-          { name: 'Göran' },
-          { name: 'Kerstin' },
-          { name: 'Amanda' },
-          { name: 'Ludde' },
-
-          { name: 'John3' },
-          { name: 'Priscilla' },
-          { name: 'Olivia' },
-          { name: 'Peter' },
-          { name: 'Walter' },
-
-          { name: 'Astrid3' },
-          { name: 'Newton' },
-          { name: 'Broyles' },
-          { name: 'William' },
-          { name: 'Walternate' },
-
-          { name: 'Ninja3' },
-          { name: 'Johanna' },
-          { name: 'Martin' },
-          { name: 'Kalle' },
-          { name: 'Hogga' },
-
-          { name: 'Nisse' },
-          { name: 'Göran' },
-          { name: 'Kerstin' },
-          { name: 'Amanda' },
-          { name: 'Ludde' },
-
-          { name: 'John4' },
-          { name: 'Priscilla' },
-          { name: 'Olivia' },
-          { name: 'Peter' },
-          { name: 'Walter' },
-
-          { name: 'Astrid4' },
-          { name: 'Newton' },
-          { name: 'Broyles' },
-          { name: 'William' },
-          { name: 'Walternate' },
-
-          { name: 'Ninja4' },
-          { name: 'Johanna' },
-          { name: 'Martin' },
-          { name: 'Kalle' },
-          { name: 'Hogga' },
-
-          { name: 'Nisse' },
-          { name: 'Göran' },
-          { name: 'Kerstin' },
-          { name: 'Amanda' },
-          { name: 'Ludde' },
-
-          { name: 'John5' },
-          { name: 'Priscilla' },
-          { name: 'Olivia' },
-          { name: 'Peter' },
-          { name: 'Walter' },
-
-          { name: 'Astrid5' },
-          { name: 'Newton' },
-          { name: 'Broyles' },
-          { name: 'William' },
-          { name: 'Walternate' },
-
-          { name: 'Ninja5' },
-          { name: 'Johanna' },
-          { name: 'Martin' },
-          { name: 'Kalle' },
-          { name: 'Hogga' },
-
-          { name: 'Nisse' },
-          { name: 'Göran' },
-          { name: 'Kerstin' },
-          { name: 'Amanda' },
-          { name: 'Ludde' },
-
-          { name: 'John6' },
-          { name: 'Priscilla' },
-          { name: 'Olivia' },
-          { name: 'Peter' },
-          { name: 'Walter' },
-
-          { name: 'Astrid6' },
-          { name: 'Newton' },
-          { name: 'Broyles' },
-          { name: 'William' },
-          { name: 'Walternate' },
-
-          { name: 'Ninja6' },
-          { name: 'Johanna' },
-          { name: 'Martin' },
-          { name: 'Kalle' },
-          { name: 'Hogga' },
-
-          { name: 'Nisse' },
-          { name: 'Göran' },
-          { name: 'Kerstin' },
-          { name: 'Amanda' },
-          { name: 'Ludde' }
-        ];*/
-
-
+var vm;
+var numberOfLoadsRequested;
+var indexRequested;
+var lengthRequested;
 var fakeItems = [];
-
-
 
 var mockLoadHandle = null
 
@@ -241,6 +91,24 @@ describe('viewModel', function() {
         it('should throw an error', function() {
           testCase.should.throw('Call sample and then render and measure the resulting ' +
                                 'visibleItems before calling setRowLength.')
+        })
+      })
+
+      describe('when is deactivated', function() {
+        beforeEach(function() {
+          vm.setActive(false)
+        })
+
+        describe('and sample is called', function() {
+          beforeEach(function(done) {
+            vm.sample(5)
+            vm.visibleItems()
+            setTimeout(done, 300)
+          })
+
+          it('should not load anything', function() {
+            vm.visibleItems().length.should.equal(0)
+          })
         })
       })
 
