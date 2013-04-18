@@ -37,21 +37,33 @@ ko.bindingHandlers.gigaScroll = {
   }
 }
 
-function createView(viewModel, itemTemplateElement) {
-  var itemTemplate  = itemTemplateElement.innerHTML
+function createView(viewModel, originalListElement) {
+  var templateListItem = originalListElement.innerHTML
   var templateEngine = createNativeStringTemplateEngine()
   templateEngine.addTemplate('gigaScroll', "\
     <div id=\"gigaViewport\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
       <div id=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
         <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
-          <ul class=\"sp-grid\" data-bind=\"foreach: visibleItems\">\
-            "+itemTemplate+"\
+          <ul id=\"gigaList\" data-bind=\"foreach: visibleItems\">\
+            " +  templateListItem+ "\
           </ul>\
         </div>\
       </div>\
     </div>");
   ko.renderTemplate(
-    "gigaScroll", viewModel, { templateEngine: templateEngine }, itemTemplateElement, "replaceNode" )
+    "gigaScroll", viewModel, { templateEngine: templateEngine }, originalListElement, "replaceNode" )
+
+  // Copy attributes (except for data-bind) from the original
+  // list element to the new element.
+  var newListElement = document.getElementById('gigaList')
+  var originalAttributes = originalListElement.attributes
+  for(var i = 0; i < originalAttributes.length; i++) {
+    var attr = originalAttributes[i]
+    if (attr.name !== 'data-bind') {
+      newListElement.setAttribute(attr.name, attr.value)
+    }
+  }
+
   return document.getElementById('gigaViewport')
 }
 
