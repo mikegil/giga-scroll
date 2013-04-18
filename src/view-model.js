@@ -143,12 +143,11 @@ function GigaScrollViewModel(opts) {
   });
 
   var _fitsInViewPort = computedLazy(function() {
-
     if (_viewPortHeight() === null || _rowHeight() === null) {
       return _sampling() || null
     }
-    var val = Math.ceil(_viewPortHeight() / _rowHeight()) * _rowLength();
-    return val ;
+    var rowsInViewPort = Math.ceil(_viewPortHeight() / _rowHeight())
+    return rowsInViewPort * _rowLength() ;
   });
 
   var _getItemsMissingHandle = null;
