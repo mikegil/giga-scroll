@@ -40,11 +40,14 @@ ko.bindingHandlers.gigaScroll = {
 function createView(viewModel, originalListElement) {
   var templateListItem = originalListElement.innerHTML
   var templateEngine = createNativeStringTemplateEngine()
+  var rand = Math.floor((Math.random()*100000)+1);
+  var viewPortId = 'gigaViewport' + rand;
+  var listId = 'gigaList' + rand;
   templateEngine.addTemplate('gigaScroll', "\
-    <div id=\"gigaViewport\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
-      <div id=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
+    <div id=\"" + viewPortId + "\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
+      <div class=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
         <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
-          <ul id=\"gigaList\" data-bind=\"foreach: visibleItems\">\
+          <ul id=\"" + listId + "\" data-bind=\"foreach: visibleItems\">\
             " +  templateListItem + "\
           </ul>\
         </div>\
@@ -55,7 +58,7 @@ function createView(viewModel, originalListElement) {
 
   // Copy attributes (except for data-bind) from the original
   // list element to the new element.
-  var newListElement = document.getElementById('gigaList')
+  var newListElement = document.getElementById(listId)
   var originalAttributes = originalListElement.attributes
   for(var i = 0; i < originalAttributes.length; i++) {
     var attr = originalAttributes[i]
@@ -64,7 +67,7 @@ function createView(viewModel, originalListElement) {
     }
   }
 
-  return document.getElementById('gigaViewport')
+  return document.getElementById(viewPortId)
 }
 
 function watchViewPortScrollPosition(viewModel, viewPort) {
