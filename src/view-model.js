@@ -108,7 +108,15 @@ function GigaScrollViewModel(opts) {
     if(!_sampling())
       throw new Error("Call sample and then render and measure the resulting " +
                       "visibleItems before calling setRowHeight.")
-    _rowHeight(height);
+
+    // The below should be done using the throttle extender,
+    // but due to throttle extender not supporting
+    // deferEvaluation (https://github.com/SteveSanderson/knockout/issues/926)
+    // we have to do it this way now.
+    clearTimeout(self.setRowLengthPositionHandle)
+    self.setRowLengthPositionHandle = setTimeout(function() {
+      _rowHeight(height);
+    }, 16)
   }
   self.setRowLength = function(rowLength) {
     if(!_sampling())
@@ -116,10 +124,10 @@ function GigaScrollViewModel(opts) {
                       "visibleItems before calling setRowLength.")
     _rowLength(rowLength);
   }
+
   self.setScrollPosition = function(y) {
     _scrollPosition(y);
   }
-
 
   var _visibleStartIndex = computedLazy(function() {
     if (_rowHeight() === null) {
