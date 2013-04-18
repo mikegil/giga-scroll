@@ -12,9 +12,8 @@ ko.bindingHandlers.gigaScroll = {
   init: function(element, valueAccessor, allBindingsAccessor) {
 
     var viewModel     = ko.utils.unwrapObservable(valueAccessor())
-    // TODO rename this to view
-    var viewPort      = createViewPort(viewModel, element)
-    var offsetCache   = watchListItemsOffsets(viewPort)
+    var view          = createView(viewModel, element)
+    var offsetCache   = watchListItemsOffsets(view)
 
     viewModel.sample(15)
 
@@ -24,8 +23,8 @@ ko.bindingHandlers.gigaScroll = {
       if (initialized) return;
       initialized = true
       setTimeout(function() {
-        watchViewPortScrollPosition (viewModel, viewPort)
-        watchViewPortHeight         (viewModel, viewPort)
+        watchViewPortScrollPosition (viewModel, view)
+        watchViewPortHeight         (viewModel, view)
         watchRows                   (viewModel, offsetCache)
       }, 250)
 
@@ -36,7 +35,7 @@ ko.bindingHandlers.gigaScroll = {
   }
 }
 
-function createViewPort(viewModel, itemTemplateElement) {
+function createView(viewModel, itemTemplateElement) {
   var itemTemplate  = itemTemplateElement.innerHTML
   var templateEngine = createNativeStringTemplateEngine()
   templateEngine.addTemplate('gigaScroll', "\
