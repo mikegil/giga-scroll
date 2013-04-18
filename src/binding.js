@@ -1,32 +1,34 @@
 (function() {
 
-  var sinceEpoch = function() {
-    return Number(new Date())
-  }
-  var start = sinceEpoch()
-  var sinceStart = function() {
-    return sinceEpoch() - start
-  }
-
 ko.bindingHandlers.gigaScroll = {
   init: function(element, valueAccessor, allBindingsAccessor) {
 
     var viewModel     = ko.utils.unwrapObservable(valueAccessor())
     var view          = createView(viewModel, element)
-    var offsetCache   = watchListItemsOffsets(view)
 
-    viewModel.sample(15)
 
-    var initialized = false
+    viewModel.sample(7)
+
+    // Wait for the sample to render before triggering
+    // the measurment watchers.
+    var isWatchingMeasurements = false
     viewModel.visibleItems.subscribe(function(newValue) {
-      if (!newValue[newValue.length-1]) return;
-      if (initialized) return;
-      initialized = true
+      if (!newValue[newValue.length-1]) {
+        // This is just an empty result so far, we're
+        // not ready to measure yet.
+        return
+      }
+
+      // Don't start the watchers twice
+      if (isWatchingMeasurements) return
+      isWatchingMeasurements = true
+
       setTimeout(function() {
+        var offsetCache   = watchListItemsOffsets(view)
         watchViewPortScrollPosition (viewModel, view)
         watchViewPortHeight         (viewModel, view)
         watchRows                   (viewModel, offsetCache)
-      }, 250)
+      }, 0)
 
     })
 
@@ -82,10 +84,8 @@ function watchRows(viewModel, offsetCache) {
         singleRowCaseWarning()
       else {
         var val = uniques[1] - uniques[0]
-        console.log("rowHeight measured at", sinceStart(), "to", val)
         viewModel.setRowHeight(val)
       }
-
     })
   }
 
@@ -104,8 +104,6 @@ function watchRows(viewModel, offsetCache) {
         if (!longestRow || rowLength > longestRow)
           longestRow = rowLength
       })
-
-      console.log("rowLength measured at", sinceStart(), "to", longestRow)
 
       viewModel.setRowLength(longestRow)
     })
