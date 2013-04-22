@@ -6,9 +6,64 @@ var vm;
 var numberOfLoadsRequested;
 var indexRequested;
 var lengthRequested;
-var fakeItems = [];
+var fakeItems;
 
 var mockLoadHandle = null
+
+var when = {}
+var and = when
+
+when.itemsOnServer = function(num, fn) {
+  describe('when there are ' + num + ' items on the server', function() {
+    beforeEach(function() {
+      while(fakeItems.length < num) {
+        fakeItems.push({ name: "name" + fakeItems.length })
+      }
+    })
+    fn()
+  })
+}
+
+
+when.sampling = function(num, fn) {
+  describe('and we sample ' + num + ' items', function() {
+    beforeEach(function() {
+      vm.sample(num)
+      vm.visibleItems()
+    })
+    fn()
+  })
+}
+
+when.viewPortHeight = function(height, fn) {
+  describe('when viewport height is ' + height, function() {
+    beforeEach(function() {
+      vm.setViewPortHeight(height)
+    })
+    fn()
+  })
+}
+
+when.rowHeight = function(height, fn) {
+  describe('when row height is ' + height, function() {
+    beforeEach(function() {
+      vm.setRowHeight(height)
+    })
+    fn()
+  })
+}
+
+when.visibleItemsUpdated = function(fn) {
+  describe('visibleItemsUpdated', function() {
+    beforeEach(function(done) {
+      vm.visibleItems()
+      setTimeout(done, 400)
+    })
+    fn()
+  })
+}
+
+
 
 describe('viewModel', function() {
   describe('when initialized', function () {
@@ -18,6 +73,7 @@ describe('viewModel', function() {
       numberOfLoadsRequested = 0;
       indexRequested = null
       lengthRequested = null
+      fakeItems = [];
       clearTimeout(mockLoadHandle)
 
       vm = new GigaScrollViewModel({
@@ -26,7 +82,6 @@ describe('viewModel', function() {
           indexRequested = index;
           lengthRequested = length;
           mockLoadHandle = setTimeout(function() {
-            console.log("reqesting", index, index+length, fakeItems.length)
             callback(fakeItems.slice(index, index+length), fakeItems.length);
           }, 25);
         }
@@ -42,12 +97,7 @@ describe('viewModel', function() {
       expect(lengthRequested, 'length').to.equal(null);
     })
 
-    describe('when there are 100000 items on the server', function() {
-      beforeEach(function() {
-        while(fakeItems.length < 100000) {
-          fakeItems.push({ name: "name" + fakeItems.length })
-        }
-      })
+    when.itemsOnServer(100000, function() {
 
       describe('setting row height before sample', function() {
         var testCase
@@ -125,8 +175,9 @@ describe('viewModel', function() {
           lengthRequested.should.equal(15)
           // TODO: Since we want the API to be predictable and
           // the first load to be fast, this should probably be
-          // 15. It complicated the code bit though, so I'm holding off
-          // until I can find a simple solution to deal with it.
+          // the same as same. It complicated the code bit though,
+          // so I'm holding off until I can find a simple solution
+          // to deal with it.
         })
 
         describe('waits a while', function() {
@@ -254,7 +305,6 @@ describe('viewModel', function() {
               describe('when scrolling just a little bit', function () {
                 beforeEach(function(done) {
                   setTimeout(function() {
-                    console.log("*** calling setScrollPosition")
                     vm.setScrollPosition(2000); // 2.5 viewports
                     vm.visibleItems();
                     setTimeout(done, 251);
@@ -414,10 +464,7 @@ describe('viewModel', function() {
                 });
               })
             })
-
           })
-
-
         });
 
 
@@ -435,14 +482,93 @@ describe('viewModel', function() {
 
       })
 
+    })
 
+    when.itemsOnServer(3, function() {
+      when.sampling(20, function() {
+        when.visibleItemsUpdated(function() {
 
+          it('should display 3 items (length)', function() {
+            vm.visibleItems().length.should.equal(3)
+          })
 
+          it('should display 3 items (content)', function() {
+            vm.visibleItems()[2].name.should.equal("name2")
+          })
 
+          when.viewPortHeight(800, function() {
+            when.rowHeight(40, function() {
+              when.visibleItemsUpdated(function() {
+
+                it('should display 3 items (length)', function() {
+                  vm.visibleItems().length.should.equal(3)
+                })
+
+                it('should display 3 items (content)', function() {
+                  vm.visibleItems()[2].name.should.equal("name2")
+                })
+
+                it('should not have re-requested anything (index)', function() {
+                  indexRequested.should.equal(0)
+                })
+
+                it('should not have re-requested anything (length)', function() {
+                  lengthRequested.should.equal(60)
+                })
+
+                it('should not have re-requested anything (number of)', function() {
+                  numberOfLoadsRequested.should.equal(1)
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+
+    when.itemsOnServer(40, function() {
+      when.sampling(10, function() {
+        when.visibleItemsUpdated(function() {
+
+          it('should display the sample (length)', function() {
+            vm.visibleItems().length.should.equal(10)
+          })
+
+          it('should have loaded 30 items', function() {
+            lengthRequested.should.equal(30)
+          })
+
+          when.viewPortHeight(800, function() {
+            when.rowHeight(10, function() {
+              when.visibleItemsUpdated(function() {
+
+                it('should display 40 items', function() {
+                  vm.visibleItems().length.should.equal(40)
+                })
+
+                it('should display all items', function() {
+                  vm.visibleItems()[39].name.should.equal('name39')
+                })
+
+                it('should have done it in two loads', function() {
+                  numberOfLoadsRequested.should.equal(2)
+                })
+
+                it('should have completed the sample (index)', function() {
+                  indexRequested.should.equal(30)
+                })
+
+                it('should have completed the sample (length)', function() {
+                  lengthRequested.should.equal(10)
+                })
+
+              })
+            })
+          })
+        })
+      })
     })
 
   })
-
 });
-
 

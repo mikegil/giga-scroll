@@ -61,8 +61,6 @@ function GigaScrollViewModel(opts) {
     return x === y
   }
 
-
-
   var self = this;
 
   self.sample = function(sampleSize) {
@@ -147,38 +145,67 @@ function GigaScrollViewModel(opts) {
   });
 
   var _numberOfItemsToRender = computedLazy(function() {
+
     if (_viewPortHeight() === null || _rowHeight() === null) {
-      return _sampling() || null
+      if (_sampling())
+        if (_numberOfServerItems() &&
+            _numberOfServerItems() < _sampling()) return _numberOfServerItems()
+        return _sampling()
+      return null
     }
+
     var rowsInViewPort = Math.ceil(_viewPortHeight() / _rowHeight())
-    return rowsInViewPort * _rowLength() ;
+    var slotsOnScreen = rowsInViewPort * _rowLength()
+
+    if (_numberOfServerItems() !== null &&
+        _numberOfServerItems() < slotsOnScreen)
+      return _numberOfServerItems()
+
+    return slotsOnScreen
   });
 
   var _getItemsMissingHandle = null;
 
+
+
   var _loadIfMissing = function(startIndex, length) {
 
-    while(_itemCache()[startIndex]) {
+    // Shrink load range from left so that
+    // we don't re-load items that are cached.
+    while(_isCached(startIndex)) {
       startIndex++;
       length--;
     }
-    while(_itemCache()[startIndex+length-1]) {
+    while(_isCached(startIndex+length-1) || _isMissing(startIndex+length-1)) {
       length--;
-      if (length < 1) return;
+      if (length < 1)  {
+        return;
+      }
     }
 
     clearTimeout(_getItemsMissingHandle);
-    _getItemsMissingHandle = setTimeout(function (){
+    _getItemsMissingHandle = setTimeout(function () {
       opts.load(startIndex, length, function(items, numberOfServerItems) {
-        _numberOfServerItems(numberOfServerItems);
         for(var i = 0; i < length; i++) {
           _itemCache()[startIndex + i] = items[i];
         }
+        _numberOfServerItems(numberOfServerItems);
         _itemCache.valueHasMutated();
       });
     }, 250);
 
   };
+
+  var _isMissing = function(index) {
+    return _numberOfServerItems() !== null &&
+           _numberOfServerItems() <= index
+  }
+
+  var _isCached = function(index) {
+    return !!_itemCache()[index]
+  }
+
+
 
   var _itemCache = ko.observableArray();
   var _numberOfServerItems = ko.observable(null);

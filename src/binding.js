@@ -94,13 +94,9 @@ function watchRows(viewModel, offsetCache) {
   function watchRowHeight() {
     ko.computed(function() {
       var uniques = uniqueOffsets()
+      if (uniques.length === 0) return
       uniques.sort(function(a,b){return a-b})
-      if (uniques.length <= 1)
-        singleRowCaseWarning()
-      else {
-        var val = uniques[1] - uniques[0]
-        viewModel.setRowHeight(val)
-      }
+      viewModel.setRowHeight(uniques[1] - uniques[0])
     })
   }
 
@@ -109,10 +105,8 @@ function watchRows(viewModel, offsetCache) {
       var longestRow,
           rowLength
 
-      if (offsetCache().length <= 1) {
-        singleRowCaseWarning()
+      if (offsetMap().length === 0)
         return
-      }
 
       uniqueOffsets().forEach(function(offset) {
         rowLength = offsetMap()[offset.toString()]
@@ -150,6 +144,15 @@ function watchRows(viewModel, offsetCache) {
         key = offset.toString()
         map[key] = map[key] ? map[key] + 1 : 1
       })
+      if (map.length === 1) {
+        // Only one row of items, so not possible to
+        // measure row height. This case will arise if
+        // the sample is either bigger than the total
+        // amount of items on the server, or sample is
+        // smaller than one row. In the latter case,
+        // input is wrong and must be increased.
+        return {}
+      }
       return map
     },
     deferEvaluation: true,
