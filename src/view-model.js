@@ -76,18 +76,18 @@ function GigaScrollViewModel(opts) {
   self.visibleItems = computedLazy(function() {
     var i, loadStartIndex, loadLength, oneViewPortAboveIndex, visibles;
 
-    if (!_isActive() || _visibleStartIndex() === null || _fitsInViewPort === null) {
+    if (!_isActive() || _visibleStartIndex() === null || _numberOfItemsToRender === null) {
       return [];
     }
 
-    oneViewPortAboveIndex = _visibleStartIndex() - _fitsInViewPort();
+    oneViewPortAboveIndex = _visibleStartIndex() - _numberOfItemsToRender();
     loadStartIndex = Math.max(oneViewPortAboveIndex, 0);
-    loadLength = _fitsInViewPort() * 3;
+    loadLength = _numberOfItemsToRender() * 3;
 
     _loadIfMissing(loadStartIndex, loadLength);
 
-    visibles = new Array(_fitsInViewPort());
-    for (i = 0; i < _fitsInViewPort(); i++) {
+    visibles = new Array(_numberOfItemsToRender());
+    for (i = 0; i < _numberOfItemsToRender(); i++) {
       visibles[i] = _itemCache()[_visibleStartIndex() + i];
     }
 
@@ -141,12 +141,12 @@ function GigaScrollViewModel(opts) {
     }
     var rowAtScrollPosition = Math.floor(_scrollPosition() / _rowHeight());
     var lastIndex = _numberOfServerItems();
-    var lastStartIndex = lastIndex - _fitsInViewPort();
+    var lastStartIndex = lastIndex - _numberOfItemsToRender();
     var indexAtScrollPosition = (rowAtScrollPosition) * _rowLength();
     return Math.min(lastStartIndex, indexAtScrollPosition);
   });
 
-  var _fitsInViewPort = computedLazy(function() {
+  var _numberOfItemsToRender = computedLazy(function() {
     if (_viewPortHeight() === null || _rowHeight() === null) {
       return _sampling() || null
     }
