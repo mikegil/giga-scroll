@@ -100,6 +100,12 @@ function GigaScrollViewModel(opts) {
     _scrollPosition(y)
   }
 
+  // invalidateCache will cause a reload of the rendered items,
+  // and purge any other cached items.
+  self.invalidateCache = function() {
+    _cacheIsStale(true)
+  }
+
   var _visibleStartIndex = _computedLazy(function() {
     if (_rowHeight() === null) {
       // _rowHeight is required to calculate,
@@ -153,14 +159,15 @@ function GigaScrollViewModel(opts) {
 
     // Shrink load range from left so that
     // we don't re-load items that are cached.
-    while(_isCached(startIndex)) {
+    while(!_cacheIsStale() && _isCached(startIndex)) {
       startIndex++;
       length--;
     }
     // Do the same from the right, but also avoid loading past the
     // end of items (i.e. loading 100 items if there are only 97 on the
     // server)
-    while(_isCached(startIndex+length-1) || _isMissing(startIndex+length-1)) {
+    while((!_cacheIsStale() && _isCached(startIndex+length-1)) ||
+            _isMissing(startIndex+length-1)) {
       if (length-- < 1) return
     }
 
@@ -171,11 +178,15 @@ function GigaScrollViewModel(opts) {
     _getItemsMissingHandle = setTimeout(function() {
       opts.load(startIndex, length, function(loadedArr, numberOfServerItems) {
         var cacheArr = _itemCache.peek() // Grab underlying array
+
+        if(_cacheIsStale()) {
+          cacheArr.length = 0 // Clear the cache
+        }
         for(var i = 0; i < length; i++) {
           cacheArr[startIndex + i] = loadedArr[i]
         }
         _numberOfServerItems(numberOfServerItems)
-
+        _cacheIsStale(false)
         // Notify subscribers that the underlying array has changed
         _itemCache.valueHasMutated()
       })
@@ -263,6 +274,7 @@ function GigaScrollViewModel(opts) {
   var _rowLength                  = ko.observable(1)
   var _sampling                   = ko.observable(null)
   var _isActive                   = ko.observable(true)
+  var _cacheIsStale               = ko.observable(false)
   var _getItemsMissingHandle      = null
   var _setRowLengthPositionHandle = null
 

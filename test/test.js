@@ -13,6 +13,8 @@ var mockLoadHandle = null
 var when = {}
 var and = when
 
+var world = {}
+
 when.itemsOnServer = function(num, fn) {
   describe('when there are ' + num + ' items on the server', function() {
     beforeEach(function() {
@@ -62,6 +64,37 @@ when.visibleItemsUpdated = function(fn) {
     fn()
   })
 }
+
+when.waitingSeconds = function(seconds, fn) {
+  describe('waiting ' + seconds + ' seconds', function() {
+    beforeEach(function(done) {
+      setTimeout(done, seconds * 1000)
+    })
+    fn()
+  })
+}
+
+when.itemsRendered = function(numberOfItems, fn) {
+
+  world.viewPortHeight = 10000
+  world.itemsOnServer = numberOfItems * 10
+
+  when.itemsOnServer(world.itemsOnServer, function() {
+    when.sampling(numberOfItems / 2, function() {
+      when.visibleItemsUpdated(function() {
+        when.viewPortHeight(world.viewPortHeight, function() {
+          when.rowHeight(world.viewPortHeight / numberOfItems, function() {
+            when.visibleItemsUpdated(function() {
+              fn()
+            })
+          })
+        })
+      })
+    })
+  })
+}
+
+
 
 
 
@@ -568,6 +601,77 @@ describe('viewModel', function() {
         })
       })
     })
+
+    when.itemsRendered(10, function() {
+
+      describe('when we scroll down to the middle', function() {
+        beforeEach(function(done) {
+          vm.setScrollPosition(vm.riverHeight() / 2)
+          vm.visibleItems()
+          setTimeout(done, 400)
+        })
+
+        // So that it's cached down there
+
+        describe('and scroll back up', function() {
+          beforeEach(function(done) {
+            vm.setScrollPosition(0)
+            vm.visibleItems()
+            setTimeout(done, 400)
+          })
+
+
+          describe('when cache invalidated', function() {
+            beforeEach(function() {
+              vm.invalidateCache()
+              vm.visibleItems()
+            })
+
+            when.waitingSeconds(0.1, function() {
+
+              it('should keep the old items for a bit', function() {
+                vm.visibleItems()[9].name.should.equal("name9")
+              })
+
+              it('should not have refetched just yet', function() {
+                indexRequested.should.not.equal(0)
+              })
+
+              when.waitingSeconds(1, function() {
+
+                it('should have refetched only the current items', function() {
+                  indexRequested.should.equal(0)
+                })
+
+                describe('when we scroll back down to the middle', function() {
+                  beforeEach(function(done) {
+                    vm.setScrollPosition(vm.riverHeight() / 2)
+                    vm.visibleItems()
+                    setTimeout(done, 10)
+                  })
+
+                  it('should have cleared the cache', function() {
+                    expect(vm.visibleItems()[0]).to.equal(undefined)
+                  })
+
+                  when.waitingSeconds(0.4, function() {
+
+                    it('should have refetched again', function() {
+                      expect(vm.visibleItems()[0]).to.not.equal(undefined)
+                    })
+                  })
+                })
+
+
+              })
+
+            })
+          })
+        })
+      })
+    })
+
+
 
   })
 });
