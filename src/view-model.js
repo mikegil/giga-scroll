@@ -48,14 +48,14 @@ function GigaScrollViewModel(opts) {
     return visibles
   })
 
-  // offsetTop is a computed property that represents the how
+  // raftOffsetTop is a computed property that represents the how
   // far down the raft is positioned in the river div.
-  self.offsetTop = _computedLazy(function() {
+  self.raftOffsetTop = _computedLazy(function() {
     return Math.floor(_visibleStartIndex() / _rowLength()) * _rowHeight()
   });
 
-  // gigaDivHeight is simply the height of the river div.
-  self.gigaDivHeight = _computedLazy(function() {
+  // riverHeight is simply the height of the river div.
+  self.riverHeight = _computedLazy(function() {
     return Math.floor(_numberOfServerItems() / _rowLength()) * _rowHeight()
   });
 

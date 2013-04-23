@@ -1,6 +1,10 @@
 (function() {
 
+// The GigaScroll binding is applied to an existing UL element.
+// It will use the inner HTML of the UL as a template for the items
+// rendered, and accepts a GigaScrollViewModel as a single argument.
 ko.bindingHandlers.gigaScroll = {
+
   init: function(element, valueAccessor, allBindingsAccessor) {
 
     var viewModel     = ko.utils.unwrapObservable(valueAccessor())
@@ -23,12 +27,10 @@ ko.bindingHandlers.gigaScroll = {
       if (isWatchingMeasurements) return
       isWatchingMeasurements = true
 
-      setTimeout(function() {
-        var offsetCache   = watchListItemsOffsets(view)
-        watchViewPortScrollPosition (viewModel, view)
-        watchViewPortHeight         (viewModel, view)
-        watchRows                   (viewModel, offsetCache)
-      }, 0)
+      var offsetCache   = watchListItemsOffsets(view)
+      watchViewPortScrollPosition (viewModel, view)
+      watchViewPortHeight         (viewModel, view)
+      watchRows                   (viewModel, offsetCache)
 
     })
 
@@ -37,16 +39,40 @@ ko.bindingHandlers.gigaScroll = {
   }
 }
 
+
 function createView(viewModel, originalListElement) {
+
+  // GigaScroll works by wrapping the bound UL in three DIV elements,
+  // a ViewPort, a River and a Raft.
+  //
+  // * ViewPort
+  // This is the "window" pointing at a specific point in the the very long list of items.
+  // It's essentially a div with 100% x 100% that overflows vertically.
+  //
+  // * River
+  // The ViewPort contains a River, which is essentially a huuuge DIV that is as large
+  // as the list would be, had it rendered all items available on the server.
+  //
+  // * Raft
+  // The Raft is the DIV that holds the UL. It follows along as the ViewPort
+  // scrolls down the River by constantly repositioning itself.
+  //
+  // * List
+  // The list is actually very short, and is continually re-populated to reflect
+  // the items at the given scroll position.
+
   var templateListItem = originalListElement.innerHTML
   var templateEngine = createNativeStringTemplateEngine()
-  var rand = Math.floor((Math.random()*100000)+1);
-  var viewPortId = 'gigaViewport' + rand;
-  var listId = 'gigaList' + rand;
+
+  // Generate unique ids so that we can use multiple
+  // gigascrolls.
+  var viewPortId  = 'gigaScrollViewport' + randomString()
+  var listId      = 'gigaScrollList' + randomString()
+
   templateEngine.addTemplate('gigaScroll', "\
     <div id=\"" + viewPortId + "\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
-      <div class=\"gigaRiver\" data-bind=\"style: { height: gigaDivHeight() + 'px' }\">\
-        <div class=\"gigaRaft\" data-bind=\"style: { paddingTop: offsetTop() + 'px' }\">\
+      <div data-bind=\"style: { height: riverHeight() + 'px' }\">\
+        <div data-bind=\"style: { paddingTop: raftOffsetTop() + 'px' }\">\
           <ul id=\"" + listId + "\" data-bind=\"foreach: visibleItems\">\
             " +  templateListItem + "\
           </ul>\
@@ -93,9 +119,11 @@ function watchRows(viewModel, offsetCache) {
 
   function watchRowHeight() {
     ko.computed(function() {
-      var uniques = uniqueOffsets()
-      if (uniques.length === 0) return
-      uniques.sort(function(a,b){return a-b})
+      // Calculate the row height by subtracting
+      // the offset of the top row with the second top row
+      var uniques = rowOffsets()
+      if (uniques.length === 0) return;
+      uniques.sort(function(a,b){ return a - b })
       viewModel.setRowHeight(uniques[1] - uniques[0])
     })
   }
@@ -108,7 +136,8 @@ function watchRows(viewModel, offsetCache) {
       if (offsetMap().length === 0)
         return
 
-      uniqueOffsets().forEach(function(offset) {
+      // find the row with most items in it
+      rowOffsets().forEach(function(offset) {
         rowLength = offsetMap()[offset.toString()]
         if (!longestRow || rowLength > longestRow)
           longestRow = rowLength
@@ -118,25 +147,21 @@ function watchRows(viewModel, offsetCache) {
     })
   }
 
-  function singleRowCaseWarning() {
-    console.warn( "Tried to measure rowLength, but failed because the" +
-                  "set was too small to fill one row. If there are more " +
-                  "items on the server, this means that we need to load more " +
-                  "but if there isn't, it's due to an edge case that GigaScroll " +
-                  "does not yet support. ")
-  }
-
-  var uniqueOffsets = ko.computed({
+  // An array of integers representing
+  // the topOffsets of the rendered rows
+  var rowOffsets = ko.computed({
     read: function() {
       var unique = []
       for(var key in offsetMap()) {
         unique.push(parseInt(key))
       }
-      return unique;
+      return unique
     },
-    deferEvaluation: true,
+    deferEvaluation: true
   })
 
+  // A map that maps
+  // offsetTop -> number of list items with that offsetTop
   var offsetMap = ko.computed({
     read: function() {
       var key, map = {}
@@ -155,7 +180,7 @@ function watchRows(viewModel, offsetCache) {
       }
       return map
     },
-    deferEvaluation: true,
+    deferEvaluation: true
   })
 
   return exec()
@@ -166,14 +191,16 @@ function watchListItemsOffsets(viewPort) {
   function exec() {
     offsetCache = ko.observableArray()
 
-    ULElement.addEventListener('DOMNodeInserted', measureRowsThrottled, false)
-    window.   addEventListener('resize',          measureRowsThrottled, false)
-    window.   addEventListener('scroll',          measureRowsThrottled, false)
-    measureRowsThrottled()
+    ULElement.addEventListener('DOMNodeInserted', refreshOffsetCacheThrottled, false)
+    window.   addEventListener('resize',          refreshOffsetCacheThrottled, false)
+    window.   addEventListener('scroll',          refreshOffsetCacheThrottled, false)
+    refreshOffsetCacheThrottled()
 
     return offsetCache
   }
 
+  // Create an array of the offsetTops of all list items and
+  // store them all in offsetCache
   function refreshOffsetCache() {
     var offset,
         mutated = false,
@@ -190,7 +217,9 @@ function watchListItemsOffsets(viewPort) {
     if (mutated) offsetCache.valueHasMutated()
   }
 
-  var measureRowsThrottled = function() {
+  // Throttled variant if refreshOffsetCache, since it's
+  // a pretty expensive operation to do.
+  var refreshOffsetCacheThrottled = function() {
     clearTimeout(offsetMeasuringHandle)
     offsetMeasuringHandle = setTimeout(refreshOffsetCache, 16)
   }
@@ -201,6 +230,10 @@ function watchListItemsOffsets(viewPort) {
 
   return exec()
 
+}
+
+function randomString() {
+  Math.floor((Math.random()*1000000)+1).toString()
 }
 
 

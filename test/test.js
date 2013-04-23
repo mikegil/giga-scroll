@@ -258,7 +258,7 @@ describe('viewModel', function() {
 
               it('should eventually calculate the size of the gigaDiv', function(done) {
                 setTimeout(function() {
-                  vm.gigaDivHeight().should.equal(8000000);
+                  vm.riverHeight().should.equal(8000000);
                   done();
                 }, 60)
               });
@@ -278,7 +278,7 @@ describe('viewModel', function() {
                 })
 
                 it('should reposition the list', function() {
-                  vm.offsetTop().should.equal(8000);
+                  vm.raftOffsetTop().should.equal(8000);
                 });
 
                 describe('scrolling back up', function (done) {
@@ -371,7 +371,7 @@ describe('viewModel', function() {
                 });
 
                 it('doesnt move the offset', function() {
-                  vm.offsetTop().should.equal(0);
+                  vm.raftOffsetTop().should.equal(0);
                 })
               });
 
@@ -407,7 +407,7 @@ describe('viewModel', function() {
                 })
 
                 it('the list should not move past the end', function () {
-                  vm.offsetTop().should.equal(7999200);
+                  vm.raftOffsetTop().should.equal(7999200);
                 })
 
               })
@@ -419,7 +419,7 @@ describe('viewModel', function() {
                 })
 
                 it('should recalculate height of the river', function() {
-                  vm.gigaDivHeight().should.equal(2000000);
+                  vm.riverHeight().should.equal(2000000);
                 })
 
                 describe('when scrolling down pretty far', function() {
@@ -438,7 +438,7 @@ describe('viewModel', function() {
                   })
 
                   it('should reposition the list', function() {
-                    vm.offsetTop().should.equal(8000);
+                    vm.raftOffsetTop().should.equal(8000);
                   });
 
 
