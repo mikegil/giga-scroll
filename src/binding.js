@@ -233,7 +233,7 @@ function watchListItemsOffsets(viewPort) {
 }
 
 function randomString() {
-  Math.floor((Math.random()*1000000)+1).toString()
+  return Math.floor((Math.random()*1000000)+1).toString()
 }
 
 
