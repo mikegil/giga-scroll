@@ -16,7 +16,7 @@ ko.bindingHandlers.gigaScroll = {
     // Wait for the sample to render before triggering
     // the measurment watchers.
     var isWatchingMeasurements = false
-    viewModel.visibleItems.subscribe(function(newValue) {
+    viewModel.renderItems.subscribe(function(newValue) {
       if (!newValue[newValue.length-1]) {
         // This is just an empty result so far, we're
         // not ready to measure yet.
@@ -73,7 +73,7 @@ function createView(viewModel, originalListElement) {
     <div id=\"" + viewPortId + "\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
       <div data-bind=\"style: { height: riverHeight() + 'px' }\">\
         <div data-bind=\"style: { paddingTop: raftOffsetTop() + 'px' }\">\
-          <ul id=\"" + listId + "\" data-bind=\"foreach: visibleItems\">\
+          <ul id=\"" + listId + "\" data-bind=\"foreach: renderItems\">\
             " +  templateListItem + "\
           </ul>\
         </div>\

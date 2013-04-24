@@ -31,7 +31,7 @@ when.sampling = function(num, fn) {
   describe('and we sample ' + num + ' items', function() {
     beforeEach(function() {
       vm.sample(num)
-      vm.visibleItems()
+      vm.renderItems()
     })
     fn()
   })
@@ -55,10 +55,10 @@ when.rowHeight = function(height, fn) {
   })
 }
 
-when.visibleItemsUpdated = function(fn) {
-  describe('visibleItemsUpdated', function() {
+when.renderItemsUpdated = function(fn) {
+  describe('renderItemsUpdated', function() {
     beforeEach(function(done) {
-      vm.visibleItems()
+      vm.renderItems()
       setTimeout(done, 400)
     })
     fn()
@@ -81,10 +81,10 @@ when.itemsRendered = function(numberOfItems, fn) {
 
   when.itemsOnServer(world.itemsOnServer, function() {
     when.sampling(numberOfItems / 2, function() {
-      when.visibleItemsUpdated(function() {
+      when.renderItemsUpdated(function() {
         when.viewPortHeight(world.viewPortHeight, function() {
           when.rowHeight(world.viewPortHeight / numberOfItems, function() {
-            when.visibleItemsUpdated(function() {
+            when.renderItemsUpdated(function() {
               fn()
             })
           })
@@ -121,8 +121,8 @@ describe('viewModel', function() {
       });
     })
 
-    it('should have an empty visibleItems', function() {
-      vm.visibleItems().length.should.equal(0);
+    it('should have an empty renderItems', function() {
+      vm.renderItems().length.should.equal(0);
     })
 
     it('should not request anything', function() {
@@ -143,7 +143,7 @@ describe('viewModel', function() {
 
         it('should throw an error', function() {
           testCase.should.throw('Call sample and then render and measure the resulting ' +
-                                'visibleItems before calling setRowHeight.')
+                                'renderItems before calling setRowHeight.')
         })
       })
 
@@ -158,7 +158,7 @@ describe('viewModel', function() {
 
         it('should throw an error', function() {
           testCase.should.throw('Call sample and then render and measure the resulting ' +
-                                'visibleItems before calling setViewPortHeight.')
+                                'renderItems before calling setViewPortHeight.')
         })
       })
 
@@ -173,7 +173,7 @@ describe('viewModel', function() {
 
         it('should throw an error', function() {
           testCase.should.throw('Call sample and then render and measure the resulting ' +
-                                'visibleItems before calling setRowLength.')
+                                'renderItems before calling setRowLength.')
         })
       })
 
@@ -185,12 +185,12 @@ describe('viewModel', function() {
         describe('and sample is called', function() {
           beforeEach(function(done) {
             vm.sample(5)
-            vm.visibleItems()
+            vm.renderItems()
             setTimeout(done, 300)
           })
 
           it('should not load anything', function() {
-            vm.visibleItems().length.should.equal(0)
+            vm.renderItems().length.should.equal(0)
           })
         })
       })
@@ -199,7 +199,7 @@ describe('viewModel', function() {
       describe('when sample is called', function() {
         beforeEach(function(done) {
           vm.sample(5)
-          vm.visibleItems()
+          vm.renderItems()
           setTimeout(done, 500)
         })
 
@@ -218,8 +218,8 @@ describe('viewModel', function() {
             setTimeout(done, 251)
           })
 
-          it('should have updated visibleItems', function() {
-            vm.visibleItems().length.should.equal(5)
+          it('should have updated renderItems', function() {
+            vm.renderItems().length.should.equal(5)
           })
         })
 
@@ -231,11 +231,11 @@ describe('viewModel', function() {
           describe('and rowHeight assigned', function() {
             beforeEach(function() {
               vm.setRowHeight(80);
-              vm.visibleItems();
+              vm.renderItems();
             })
 
-            it('should NOT immediately update visibleItems', function() {
-              vm.visibleItems().length.should.equal(5) // not 800 / 80 = 10
+            it('should NOT immediately update renderItems', function() {
+              vm.renderItems().length.should.equal(5) // not 800 / 80 = 10
             })
 
             describe('after a very short while', function() {
@@ -247,7 +247,7 @@ describe('viewModel', function() {
                 })
 
                 it('should not update immediately either', function() {
-                  vm.visibleItems().length.should.equal(5) // not 800 / 10 = 80
+                  vm.renderItems().length.should.equal(5) // not 800 / 10 = 80
                 })
 
                 describe('rowHeight updated again', function() {
@@ -258,8 +258,8 @@ describe('viewModel', function() {
                   describe('waiting a small while, a frame', function() {
                     beforeEach(function(done) { setTimeout(done, 17) })
 
-                    it('should finally update visibleItems', function() {
-                      vm.visibleItems().length.should.equal(20) // 800 / 40 = 20
+                    it('should finally update renderItems', function() {
+                      vm.renderItems().length.should.equal(20) // 800 / 40 = 20
                     })
                   })
                 })
@@ -271,7 +271,7 @@ describe('viewModel', function() {
               beforeEach(function(done) { setTimeout(done, 300) })
 
               it('should have gone back to normal, non-sample layout', function() {
-                vm.visibleItems().length.should.equal(10)
+                vm.renderItems().length.should.equal(10)
               })
 
               it('should request three screenheights worth', function() {
@@ -281,9 +281,9 @@ describe('viewModel', function() {
 
               it('should display the items', function(done) {
                 setTimeout(function() {
-                  vm.visibleItems();
-                  vm.visibleItems()[2].name.should.equal('name2');
-                  vm.visibleItems()[9].name.should.equal('name9');
+                  vm.renderItems();
+                  vm.renderItems()[2].name.should.equal('name2');
+                  vm.renderItems()[9].name.should.equal('name9');
 
                   done();
                 }, 60);
@@ -299,7 +299,7 @@ describe('viewModel', function() {
               describe('when scrolling down pretty far', function() {
                 beforeEach(function(done) {
                   vm.setScrollPosition(8000);
-                  vm.visibleItems();
+                  vm.renderItems();
                   setTimeout(done, 250+25+1);
                 })
 
@@ -318,7 +318,7 @@ describe('viewModel', function() {
                   beforeEach(function(done) {
                     setTimeout(function () {
                       vm.setScrollPosition(8000-400); // half a viewport height
-                      vm.visibleItems();
+                      vm.renderItems();
                       setTimeout(done, 251);
                     }, 150); // Wait for prior load to complete
                   });
@@ -339,25 +339,25 @@ describe('viewModel', function() {
                 beforeEach(function(done) {
                   setTimeout(function() {
                     vm.setScrollPosition(2000); // 2.5 viewports
-                    vm.visibleItems();
+                    vm.renderItems();
                     setTimeout(done, 251);
                   }, 60); // <- wait for prior load to finish
                 })
 
                 it('immediately moves the list', function() {
-                  vm.visibleItems()[0].name.should.equal('name25');
+                  vm.renderItems()[0].name.should.equal('name25');
                 })
 
                 it('empties the unloaded items (first)', function() {
-                  expect(vm.visibleItems()[6]).to.equal(undefined)
+                  expect(vm.renderItems()[6]).to.equal(undefined)
                 })
 
                 it('empties the unloaded items (last)', function() {
-                  expect(vm.visibleItems()[9]).to.equal(undefined)
+                  expect(vm.renderItems()[9]).to.equal(undefined)
                 })
 
                 it('returns the full length even if not loaded', function() {
-                  vm.visibleItems().length.should.equal(10);
+                  vm.renderItems().length.should.equal(10);
                 })
 
                 describe('after a while', function() {
@@ -371,7 +371,7 @@ describe('viewModel', function() {
                   })
 
                   it('loaded only the necessary items (length)', function() {
-                    vm.visibleItems();
+                    vm.renderItems();
                     lengthRequested.should.equal(15)
                   })
 
@@ -382,12 +382,12 @@ describe('viewModel', function() {
                     })
 
                     it('doesnt request new load', function() {
-                      vm.visibleItems();
+                      vm.renderItems();
                       indexRequested.should.not.equal(0)
                     })
 
                     it('uses cached items', function() {
-                      vm.visibleItems()[0].name.should.equal("name0");
+                      vm.renderItems()[0].name.should.equal("name0");
                     })
                   })
 
@@ -413,10 +413,10 @@ describe('viewModel', function() {
                   setTimeout(function() {
                     numberOfLoadsRequested = 0;
                     vm.setScrollPosition(200);
-                    vm.visibleItems();
+                    vm.renderItems();
                     setTimeout(function() {
                       vm.setScrollPosition(1200);
-                      vm.visibleItems();
+                      vm.renderItems();
                       setTimeout(done, 251);
                     }, 25)
                   }, 100); // wait for any prior load to finish
@@ -458,7 +458,7 @@ describe('viewModel', function() {
                 describe('when scrolling down pretty far', function() {
                   beforeEach(function(done) {
                     vm.setScrollPosition(8000);
-                    vm.visibleItems();
+                    vm.renderItems();
                     setTimeout(done, 750); // FIXME: the throttling of load makes this very long :()
                   })
 
@@ -479,7 +479,7 @@ describe('viewModel', function() {
                     beforeEach(function(done) {
                       setTimeout(function () {
                         vm.setScrollPosition(8000-400); // half a viewport height
-                        vm.visibleItems();
+                        vm.renderItems();
                         setTimeout(done, 251);
                       }, 150); // Wait for prior load to complete
                     });
@@ -509,7 +509,7 @@ describe('viewModel', function() {
           });
 
           it('rounds upwards', function() {
-            vm.visibleItems().length.should.equal(11)
+            vm.renderItems().length.should.equal(11)
           })
         });
 
@@ -519,26 +519,26 @@ describe('viewModel', function() {
 
     when.itemsOnServer(3, function() {
       when.sampling(20, function() {
-        when.visibleItemsUpdated(function() {
+        when.renderItemsUpdated(function() {
 
           it('should display 3 items (length)', function() {
-            vm.visibleItems().length.should.equal(3)
+            vm.renderItems().length.should.equal(3)
           })
 
           it('should display 3 items (content)', function() {
-            vm.visibleItems()[2].name.should.equal("name2")
+            vm.renderItems()[2].name.should.equal("name2")
           })
 
           when.viewPortHeight(800, function() {
             when.rowHeight(40, function() {
-              when.visibleItemsUpdated(function() {
+              when.renderItemsUpdated(function() {
 
                 it('should display 3 items (length)', function() {
-                  vm.visibleItems().length.should.equal(3)
+                  vm.renderItems().length.should.equal(3)
                 })
 
                 it('should display 3 items (content)', function() {
-                  vm.visibleItems()[2].name.should.equal("name2")
+                  vm.renderItems()[2].name.should.equal("name2")
                 })
 
                 it('should not have re-requested anything (index)', function() {
@@ -561,10 +561,10 @@ describe('viewModel', function() {
 
     when.itemsOnServer(40, function() {
       when.sampling(10, function() {
-        when.visibleItemsUpdated(function() {
+        when.renderItemsUpdated(function() {
 
           it('should display the sample (length)', function() {
-            vm.visibleItems().length.should.equal(10)
+            vm.renderItems().length.should.equal(10)
           })
 
           it('should have loaded 30 items', function() {
@@ -573,14 +573,14 @@ describe('viewModel', function() {
 
           when.viewPortHeight(800, function() {
             when.rowHeight(10, function() {
-              when.visibleItemsUpdated(function() {
+              when.renderItemsUpdated(function() {
 
                 it('should display 40 items', function() {
-                  vm.visibleItems().length.should.equal(40)
+                  vm.renderItems().length.should.equal(40)
                 })
 
                 it('should display all items', function() {
-                  vm.visibleItems()[39].name.should.equal('name39')
+                  vm.renderItems()[39].name.should.equal('name39')
                 })
 
                 it('should have done it in two loads', function() {
@@ -607,7 +607,7 @@ describe('viewModel', function() {
       describe('when we scroll down to the middle', function() {
         beforeEach(function(done) {
           vm.setScrollPosition(vm.riverHeight() / 2)
-          vm.visibleItems()
+          vm.renderItems()
           setTimeout(done, 400)
         })
 
@@ -616,7 +616,7 @@ describe('viewModel', function() {
         describe('and scroll back up', function() {
           beforeEach(function(done) {
             vm.setScrollPosition(0)
-            vm.visibleItems()
+            vm.renderItems()
             setTimeout(done, 400)
           })
 
@@ -624,13 +624,13 @@ describe('viewModel', function() {
           describe('when cache invalidated', function() {
             beforeEach(function() {
               vm.invalidateCache()
-              vm.visibleItems()
+              vm.renderItems()
             })
 
             when.waitingSeconds(0.1, function() {
 
               it('should keep the old items for a bit', function() {
-                vm.visibleItems()[9].name.should.equal("name9")
+                vm.renderItems()[9].name.should.equal("name9")
               })
 
               it('should not have refetched just yet', function() {
@@ -646,18 +646,18 @@ describe('viewModel', function() {
                 describe('when we scroll back down to the middle', function() {
                   beforeEach(function(done) {
                     vm.setScrollPosition(vm.riverHeight() / 2)
-                    vm.visibleItems()
+                    vm.renderItems()
                     setTimeout(done, 10)
                   })
 
                   it('should have cleared the cache', function() {
-                    expect(vm.visibleItems()[0]).to.equal(undefined)
+                    expect(vm.renderItems()[0]).to.equal(undefined)
                   })
 
                   when.waitingSeconds(0.4, function() {
 
                     it('should have refetched again', function() {
-                      expect(vm.visibleItems()[0]).to.not.equal(undefined)
+                      expect(vm.renderItems()[0]).to.not.equal(undefined)
                     })
                   })
                 })

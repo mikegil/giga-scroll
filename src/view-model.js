@@ -16,14 +16,14 @@ function GigaScrollViewModel(opts) {
   // setActive accepts a boolean value that
   // determines whether or not this instance of GigaScroll should
   // be rendering items. When setActive is set to false, GigaScroll
-  // is in a dormant state and won't return any visibleItems.
+  // is in a dormant state and won't return any renderItems.
   self.setActive = function(value) {
     _isActive(value)
   }
 
-  // visibleItems is a computed property that represents
+  // renderItems is a computed property that represents
   // the subset of all items that should be rendered to the DOM.
-  self.visibleItems = _computedLazy(function() {
+  self.renderItems = _computedLazy(function() {
     var i, loadStartIndex, loadLength, oneViewPortAboveIndex, visibles;
 
     if (_numberOfItemsToRender() === 0) return [];
@@ -64,7 +64,7 @@ function GigaScrollViewModel(opts) {
   self.setViewPortHeight = function(height) {
     if(!_sampling())
       throw new Error("Call sample and then render and measure the resulting " +
-                      "visibleItems before calling setViewPortHeight.")
+                      "renderItems before calling setViewPortHeight.")
     _viewPortHeight(height);
   }
 
@@ -73,7 +73,7 @@ function GigaScrollViewModel(opts) {
   self.setRowHeight = function(heightPx)  {
     if(!_sampling())
       throw new Error("Call sample and then render and measure the resulting " +
-                      "visibleItems before calling setRowHeight.")
+                      "renderItems before calling setRowHeight.")
 
     // The below should be done using the throttle extender,
     // but due to throttle extender not supporting
@@ -90,7 +90,7 @@ function GigaScrollViewModel(opts) {
   self.setRowLength = function(rowLength) {
     if(!_sampling())
       throw new Error("Call sample and then render and measure the resulting " +
-                      "visibleItems before calling setRowLength.")
+                      "renderItems before calling setRowLength.")
     _rowLength(rowLength)
   }
 
