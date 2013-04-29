@@ -69,8 +69,13 @@ function createView(viewModel, originalListElement) {
   var viewPortId  = 'gigaScrollViewport' + randomString()
   var listId      = 'gigaScrollList' + randomString()
 
+  // Promote the view to be composited to improve scrolling
+  // performance in Chrome.
+  // https://code.google.com/p/chromium/issues/detail?id=136555
+  var compositioningHack = '-webkit-transform:translateZ(0)'
+
   templateEngine.addTemplate('gigaScroll', "\
-    <div id=\"" + viewPortId + "\" style=\"width: 100%; height: 100%; overflow-y: scroll\">\
+    <div id=\"" + viewPortId + "\" style=\"width: 100%; height: 100%; overflow-y: scroll; " + compositioningHack +"\">\
       <div data-bind=\"style: { height: riverHeight() + 'px' }\">\
         <div data-bind=\"style: { paddingTop: raftOffsetTop() + 'px' }\">\
           <ul id=\"" + listId + "\" data-bind=\"foreach: renderItems\">\
