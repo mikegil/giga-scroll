@@ -81,6 +81,18 @@ function GigaScrollViewModel(opts) {
     // we have to do it this way now.
     clearTimeout(_setRowLengthPositionHandle)
     _setRowLengthPositionHandle = setTimeout(function() {
+
+      // Because of the fun of floating point math,
+      // the measurement of elements might sometimes change by
+      // a single pixel some cases, which in turn caused an infinite
+      // loop of renderItems changes and measurements. To handle this,
+      // we ignore changes to rowHeight that are just a
+      // single pixel. A bit hacky, but the best way I can think of at
+      // the moment.
+      var diff = heightPx - _rowHeight()
+      var isDiffTooSmall = diff === 1 || diff === -1
+      if(isDiffTooSmall) return;
+
       _rowHeight(heightPx)
     }, 16)
   }

@@ -602,74 +602,65 @@ describe('viewModel', function() {
       })
     })
 
-    when.itemsRendered(10, function() {
+    when.itemsOnServer(1000, function() {
+      when.sampling(10, function() {
+        when.viewPortHeight(800, function() {
 
-      describe('when we scroll down to the middle', function() {
-        beforeEach(function(done) {
-          vm.setScrollPosition(vm.riverHeight() / 2)
-          vm.renderItems()
-          setTimeout(done, 400)
-        })
-
-        // So that it's cached down there
-
-        describe('and scroll back up', function() {
-          beforeEach(function(done) {
-            vm.setScrollPosition(0)
-            vm.renderItems()
-            setTimeout(done, 400)
-          })
-
-
-          describe('when cache invalidated', function() {
-            beforeEach(function() {
-              vm.invalidateCache()
-              vm.renderItems()
-            })
-
-            when.waitingSeconds(0.1, function() {
-
-              it('should keep the old items for a bit', function() {
-                vm.renderItems()[9].name.should.equal("name9")
+          when.rowHeight(10, function() {
+            when.renderItemsUpdated(function() {
+              var renderTriggered;
+              beforeEach(function() {
+                renderTriggered = false;
+                vm.renderItems.subscribe(function() {
+                  renderTriggered = true
+                })
               })
 
-              it('should not have refetched just yet', function() {
-                indexRequested.should.not.equal(0)
-              })
-
-              when.waitingSeconds(1, function() {
-
-                it('should have refetched only the current items', function() {
-                  indexRequested.should.equal(0)
+              describe('and we change the rowHeight JUST one pixel MORE', function () {
+                beforeEach(function() {
+                  vm.setRowHeight(11)
                 })
 
-                describe('when we scroll back down to the middle', function() {
-                  beforeEach(function(done) {
-                    vm.setScrollPosition(vm.riverHeight() / 2)
-                    vm.renderItems()
-                    setTimeout(done, 10)
-                  })
-
-                  it('should have cleared the cache', function() {
-                    expect(vm.renderItems()[0]).to.equal(undefined)
-                  })
-
-                  when.waitingSeconds(0.4, function() {
-
-                    it('should have refetched again', function() {
-                      expect(vm.renderItems()[0]).to.not.equal(undefined)
-                    })
+                when.renderItemsUpdated(function() {
+                  it('should not have triggered a change', function() {
+                    expect(renderTriggered).to.be.false
                   })
                 })
-
-
               })
 
             })
           })
+
+
+          when.rowHeight(11, function() {
+            when.renderItemsUpdated(function() {
+              var renderTriggered;
+              beforeEach(function() {
+                renderTriggered = false;
+                vm.renderItems.subscribe(function() {
+                  renderTriggered = true
+                })
+              })
+
+              describe('and we change the rowHeight JUST one pixel LESS', function () {
+                beforeEach(function() {
+                  vm.setRowHeight(10)
+                })
+
+                when.renderItemsUpdated(function() {
+                  it('should not have triggered a change', function() {
+                    expect(renderTriggered).to.be.false
+                  })
+                })
+              })
+            })
+          })
+
         })
       })
     })
+
+
 
 
 
