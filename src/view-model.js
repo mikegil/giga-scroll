@@ -1,3 +1,47 @@
+/*
+ * This is a general-purpose "notifyComparer"
+ * Knockout extender (http://knockoutjs.com/documentation/extenders.html)
+ * that can be chained onto any observable or computed value. It causes the
+ * target only to issue change notifications when the equalityComparer says
+ * the value has changed.
+ */
+ko.extenders.notifyComparer = function(target, equalityComparer) {
+  var valueToNotify = ko.observable()
+  valueToNotify.equalityComparer = function(x, y) {
+    // If both x and y are arrays,
+    // loop through them and compare the
+    // individual items using the equalityComparer.
+    if (Array.isArray(x)) {
+      if (Array.isArray(y)) {
+        if (x.length !== y.length) {
+          return false
+        }
+        for(var i = 0; i < x.length; i++) {
+          if (!equalityComparer(x[i], y[i])) {
+            return false
+          }
+        }
+        return true
+      }
+      return false
+    }
+    return equalityComparer(x, y)
+  }
+  target.subscribe(valueToNotify)
+  var firstRead = true
+  return ko.computed({
+    deferEvaluation: true,
+    read: function() {
+      if (firstRead) {
+        firstRead = false
+        valueToNotify(target.peek())
+      }
+      return valueToNotify()
+    }
+  })
+}
+
+
 function GigaScrollViewModel(opts) {
 
   var self = this;
@@ -229,48 +273,7 @@ function GigaScrollViewModel(opts) {
     })
   }
 
-  /*
-   * This is a general-purpose "notifyComparer"
-   * Knockout extender (http://knockoutjs.com/documentation/extenders.html)
-   * that can be chained onto any observable or computed value. It causes the
-   * target only to issue change notifications when the equalityComparer says
-   * the value has changed.
-   */
-  ko.extenders.notifyComparer = function(target, equalityComparer) {
-    var valueToNotify = ko.observable()
-    valueToNotify.equalityComparer = function(x, y) {
-      // If both x and y are arrays,
-      // loop through them and compare the
-      // individual items using the equalityComparer.
-      if (Array.isArray(x)) {
-        if (Array.isArray(y)) {
-          if (x.length !== y.length) {
-            return false
-          }
-          for(var i = 0; i < x.length; i++) {
-            if (!equalityComparer(x[i], y[i])) {
-              return false
-            }
-          }
-          return true
-        }
-        return false
-      }
-      return equalityComparer(x, y)
-    }
-    target.subscribe(valueToNotify)
-    var firstRead = true
-    return ko.computed({
-      deferEvaluation: true,
-      read: function() {
-        if (firstRead) {
-          firstRead = false
-          valueToNotify(target.peek())
-        }
-        return valueToNotify()
-      }
-    })
-  }
+
 
   // TODO: Extend ViewModel interface to support
   // passing a custom comparer function.
