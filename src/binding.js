@@ -198,7 +198,6 @@ function watchListItemsOffsets(viewPort) {
 
     ULElement.addEventListener('DOMNodeInserted', refreshOffsetCacheThrottled, false)
     window.   addEventListener('resize',          refreshOffsetCacheThrottled, false)
-    window.   addEventListener('scroll',          refreshOffsetCacheThrottled, false)
     refreshOffsetCacheThrottled()
 
     return offsetCache
