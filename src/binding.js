@@ -97,7 +97,6 @@ function createView(viewModel, originalListElement) {
       newListElement.setAttribute(attr.name, attr.value)
     }
   }
-
   return document.getElementById(viewPortId)
 }
 
@@ -222,7 +221,14 @@ function watchListItemsOffsets(viewPort) {
         mutated = true
       }
     }
-    if (mutated) offsetCache.valueHasMutated()
+    if (mutated)  {
+
+      // We have a measurement now, no need to listen to more dom node events.
+      // TODO: This feels slightly hacky somehow...
+      ULElement.removeEventListener('DOMNodeInserted', refreshOffsetCacheThrottled, false)
+
+      offsetCache.valueHasMutated()
+    }
   }
 
   // Throttled variant if refreshOffsetCache, since it's
