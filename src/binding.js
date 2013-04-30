@@ -213,6 +213,10 @@ function watchListItemsOffsets(viewPort) {
         elements = ULElement.getElementsByTagName('li')
 
     for (var i = 0; i < elements.length; i++) {
+
+      // Don't measure items that are based on undefined data (loading)
+      if (!ko.dataFor(elements[i])) return;
+
       offset = elements[i].offsetTop
       if (underlyingArray[i] !== offset) {
         underlyingArray[i] = offset
