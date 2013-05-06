@@ -55,6 +55,15 @@ when.rowHeight = function(height, fn) {
   })
 }
 
+when.rowLength = function(length, fn) {
+  describe('when row length is ' + length, function() {
+    beforeEach(function() {
+      vm.setRowLength(length)
+    })
+    fn()
+  })
+}
+
 when.renderItemsUpdated = function(fn) {
   describe('renderItemsUpdated', function() {
     beforeEach(function(done) {
@@ -432,19 +441,6 @@ describe('viewModel', function() {
 
               });
 
-              describe('when scrolling to the bottom', function() {
-                beforeEach(function(done) {
-                  vm.setScrollPosition(7999200 + 100); // slightly more than
-                                                       // one viewport before the end
-                  setTimeout(done, 251);
-                })
-
-                it('the list should not move past the end', function () {
-                  vm.raftOffsetTop().should.equal(7999200);
-                })
-
-              })
-
               describe('when rowLength is set', function() {
                 beforeEach(function(done) {
                   vm.setRowLength(4);
@@ -605,15 +601,17 @@ describe('viewModel', function() {
     when.itemsOnServer(1000, function() {
       when.sampling(10, function() {
         when.viewPortHeight(800, function() {
-
           when.rowHeight(10, function() {
             when.renderItemsUpdated(function() {
               var renderTriggered;
               beforeEach(function() {
-                renderTriggered = false;
-                vm.renderItems.subscribe(function() {
-                  renderTriggered = true
-                })
+                renderTriggered = false
+                setTimeout(function() {
+                  vm.renderItems.subscribe(function() {
+                    renderTriggered = true
+                  })
+                },251)
+
               })
 
               describe('and we change the rowHeight JUST one pixel MORE', function () {
@@ -637,9 +635,11 @@ describe('viewModel', function() {
               var renderTriggered;
               beforeEach(function() {
                 renderTriggered = false;
-                vm.renderItems.subscribe(function() {
-                  renderTriggered = true
-                })
+                setTimeout(function() {
+                  vm.renderItems.subscribe(function() {
+                    renderTriggered = true
+                  })
+                }, 251)
               })
 
               describe('and we change the rowHeight JUST one pixel LESS', function () {
@@ -660,7 +660,85 @@ describe('viewModel', function() {
       })
     })
 
+    when.itemsOnServer(1000, function() {
+      when.sampling(10, function() {
+        when.viewPortHeight(800, function() {
+          when.rowHeight(80, function() {
+            when.rowLength(4, function() {
 
+              describe('when rowBuffer is 1', function() {
+                beforeEach(function() {
+                  vm.setRowBuffer(1)
+                })
+
+                when.renderItemsUpdated(function() {
+
+                  it('should render one extra row', function() {
+                    vm.renderItems().length.should.equal( ((800/80) + 1) * 4 )
+                  })
+
+                  it('should  not have changed offset', function() {
+                    vm.raftOffsetTop().should.equal(0)
+                  })
+
+                  it('should render the right items', function() {
+                    vm.renderItems()[0].name.should.equal('name0')
+                  })
+
+                  describe('when scrolling down a bit', function() {
+                    beforeEach(function() {
+                      vm.setScrollPosition(20*800)
+                    })
+
+                    when.renderItemsUpdated(function() {
+
+
+                      it('should have rendered two extra rows', function( ) {
+                        vm.renderItems().length.should.equal( ((800/80) + 2) * 4 )
+                      })
+
+
+                      it('should have positioned the raft one row above the scroll position', function() {
+                        vm.raftOffsetTop().should.equal(20*800 - 80)
+                      })
+
+                      it('should render the correct item', function() {
+                        vm.renderItems()[0].name.should.equal("name796")
+                      })
+
+
+                    })
+                  })
+
+                  describe('scrolling to bottom', function() {
+                    beforeEach(function() {
+                      vm.setScrollPosition(24*800)
+                    })
+
+                    when.renderItemsUpdated(function() {
+                      it('should have just one row extra', function() {
+                        vm.renderItems().length.should.equal( ((800/80) + 1) * 4 )
+                      })
+
+                      it('should position the raft one above', function() {
+                        vm.raftOffsetTop().should.equal(24*800-80)
+                      })
+
+                      it('should render the right rows', function() {
+                        vm.renderItems()[0].name.should.equal('name956')
+                      })
+                    })
+
+                  })
+
+                })
+
+              })
+            })
+          })
+        })
+      })
+    })
 
 
 

@@ -70,23 +70,23 @@ function GigaScrollViewModel(opts) {
   self.renderItems = _computedLazy(function() {
     var i, loadStartIndex, loadLength, oneViewPortAboveIndex, visibles;
 
-    if (_numberOfItemsToRender() === 0) return [];
+    if (_renderLength() === 0) return [];
 
     // Calculate how many items to load from server (we preload three screens
     // worth of content)
-    if (_visibleStartIndex() === null) return [];
-    oneViewPortAboveIndex = _visibleStartIndex() - _numberOfItemsToRender();
+    if (_renderIndex() === null) return [];
+    oneViewPortAboveIndex = _renderIndex() - _renderLength();
     loadStartIndex = Math.max(oneViewPortAboveIndex, 0);
-    loadLength = _numberOfItemsToRender() * 3;
+    loadLength = _renderLength() * 3;
     _loadIfMissing(loadStartIndex, loadLength);
 
     // Return an array with the same length as
     // the number of items that we want to render.
     // The items in the array that are not yet
     // loaded will be undefined.
-    visibles = new Array(_numberOfItemsToRender())
-    for (i = 0; i < _numberOfItemsToRender(); i++) {
-      visibles[i] = _itemCache()[_visibleStartIndex() + i]
+    visibles = new Array(_renderLength())
+    for (i = 0; i < _renderLength(); i++) {
+      visibles[i] = _itemCache()[_renderIndex() + i]
     }
 
     return visibles
@@ -95,13 +95,17 @@ function GigaScrollViewModel(opts) {
   // raftOffsetTop is a computed property that represents the how
   // far down the raft is positioned in the river div.
   self.raftOffsetTop = _computedLazy(function() {
-    return Math.floor(_visibleStartIndex() / _rowLength()) * _rowHeight()
-  });
+    if(_rowLength() === null || _rowHeight() === null) return 0
+
+    var numberOfRowsAboveIndex =  _renderIndex() / _rowLength()
+    var ret = numberOfRowsAboveIndex * _rowHeight()
+    return ret;
+  })
 
   // riverHeight is simply the height of the river div.
   self.riverHeight = _computedLazy(function() {
     return Math.floor(_numberOfServerItems() / _rowLength()) * _rowHeight()
-  });
+  })
 
   // setViewPortHeight is used by the view to notify the ViewModel
   // of how big the viewport is.
@@ -162,26 +166,30 @@ function GigaScrollViewModel(opts) {
     _cacheIsStale(true)
   }
 
-  var _visibleStartIndex = _computedLazy(function() {
+  self.setRowBuffer = function(rows) {
+    _rowBuffer(rows)
+  }
+
+  var _renderIndex = _computedLazy(function() {
     if (_rowHeight() === null) {
       // _rowHeight is required to calculate,
       // but if we have a sampling, we're still okay:
       return !!_sampling() ? 0 : null
     }
-    var rowAtScrollPosition = Math.floor(_scrollPosition() / _rowHeight())
-    var lastIndex = _numberOfServerItems()
-    var lastStartIndex = lastIndex - _numberOfItemsToRender()
-    var indexAtScrollPosition = (rowAtScrollPosition) * _rowLength()
-    return Math.min(lastStartIndex, indexAtScrollPosition);
+
+    var lastPossibleStartIndex = _numberOfServerItems() - _renderLength()
+    var rowAtTopBound = Math.floor(_renderAreaBoundTop() / _rowHeight())
+    var indexAtTopBound = rowAtTopBound * _rowLength()
+    return Math.max(0, Math.min(lastPossibleStartIndex, indexAtTopBound))
   })
 
   // The number of items to render to the DOM.
-  var _numberOfItemsToRender = _computedLazy(function() {
+  var _renderLength = _computedLazy(function() {
 
     // Never render any items when inactive
     if (!_isActive()) return 0;
 
-    if (_viewPortHeight() === null || _rowHeight() === null) {
+    if (_rowHeight() === null) {
       // Looks like the view has not yet measured rowHeight or viewPort ...
       if (_sampling()) {
         // but it's cool, because sampling has been set - let's load the sampling
@@ -197,16 +205,18 @@ function GigaScrollViewModel(opts) {
       return 0
     }
 
-    var rowsInViewPort = Math.ceil(_viewPortHeight() / _rowHeight())
-    var slotsOnScreen = rowsInViewPort * _rowLength()
+    // Standard case, we have viewPortHeight and rowHeight ...
+    var fitsInRenderAreaRows = Math.ceil(_renderAreaHeight() / _rowHeight())
+    var fitsInRenderAreaItems = fitsInRenderAreaRows * _rowLength()
+
 
     // Make sure we never render more items than are available on the server.
     if (_numberOfServerItems() !== null &&
-        _numberOfServerItems() < slotsOnScreen) {
+        _numberOfServerItems() < fitsInRenderAreaItems) {
       return _numberOfServerItems()
     }
 
-    return slotsOnScreen
+    return fitsInRenderAreaItems
   })
 
   // Ensures that a range of items is loaded. Will automatically
@@ -248,7 +258,22 @@ function GigaScrollViewModel(opts) {
       })
     }, 250)
 
-  };
+  }
+
+  var _renderAreaHeight = _computedLazy(function() {
+    return Math.max(_renderAreaBoundBottom() - _renderAreaBoundTop(), 0)
+  })
+
+  var _renderAreaBoundTop = _computedLazy(function() {
+    return Math.max(0, _scrollPosition() - _rowBuffer() * _rowHeight())
+  })
+
+  var _renderAreaBoundBottom = _computedLazy(function() {
+    return Math.min(
+      self.riverHeight(),
+      _scrollPosition() + _viewPortHeight() + _rowBuffer() * _rowHeight()
+    )
+  })
 
   // Returns true if this index is verified
   // not to exist on the server
@@ -273,8 +298,6 @@ function GigaScrollViewModel(opts) {
     })
   }
 
-
-
   // TODO: Extend ViewModel interface to support
   // passing a custom comparer function.
   function _simpleComparer(x, y) {
@@ -292,6 +315,6 @@ function GigaScrollViewModel(opts) {
   var _cacheIsStale               = ko.observable(false)
   var _getItemsMissingHandle      = null
   var _setRowLengthPositionHandle = null
-
+  var _rowBuffer                  = ko.observable(0)
 
 }
